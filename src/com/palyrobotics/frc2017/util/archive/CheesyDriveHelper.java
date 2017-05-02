@@ -185,6 +185,22 @@ public class CheesyDriveHelper {
 		mSignal.rightMotor.setPercentVBus(rightPwm);
 		return mSignal;
 	}
+	
+	public DriveSignal proportionalDrive(Commands commands, RobotState robotState) {
+		double throttle = Math.pow(-commands.leftStickInput.y, 3);
+		double wheel = commands.rightStickInput.x * 0.5;
+		
+		wheel = handleDeadband(wheel, kWheelStickDeadband);
+		throttle = handleDeadband(throttle, kThrottleStickDeadband);
+		
+		double leftPwm = Math.max(Math.min(throttle + wheel, 1), -1);
+		double rightPwm = Math.max(Math.min(throttle - wheel, 1), -1);
+		
+		DriveSignal mSignal = DriveSignal.getNeutralSignal();
+		mSignal.leftMotor.setPercentVBus(leftPwm);
+		mSignal.rightMotor.setPercentVBus(rightPwm);
+		return mSignal;
+	}
 
 	/**
 	 * Neutralizes a value within a deadband

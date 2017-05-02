@@ -113,7 +113,8 @@ public class Drive extends Subsystem implements SubsystemLoop {
 		
 		switch(mState) {
 			case CHEZY:
-				setDriveOutputs(mCDH.cheesyDrive(commands, mCachedRobotState));
+				//setDriveOutputs(mCDH.cheesyDrive(commands, mCachedRobotState));
+				setDriveOutputs(mCDH.proportionalDrive(commands, mCachedRobotState));
 				break;
 			case OFF_BOARD_CONTROLLER:
 				if (mController == null) {

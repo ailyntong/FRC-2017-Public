@@ -221,12 +221,12 @@ class HardwareUpdater {
 		if (rightSlave2Talon != null) rightSlave2Talon.configPeakOutputVoltage(Constants.kDriveMaxClosedLoopOutput, -Constants.kDriveMaxClosedLoopOutput);
 		
 		// Allow max voltage for open loop control
-		leftMasterTalon.configMaxOutputVoltage(13);
-		leftSlave1Talon.configMaxOutputVoltage(13);
-		if (leftSlave2Talon != null) leftSlave2Talon.configMaxOutputVoltage(13);
-		rightMasterTalon.configMaxOutputVoltage(13);
-		rightSlave1Talon.configMaxOutputVoltage(13);
-		if (rightSlave2Talon != null) rightSlave2Talon.configMaxOutputVoltage(13);
+		leftMasterTalon.configMaxOutputVoltage(8);
+		leftSlave1Talon.configMaxOutputVoltage(8);
+		if (leftSlave2Talon != null) leftSlave2Talon.configMaxOutputVoltage(8);
+		rightMasterTalon.configMaxOutputVoltage(8);
+		rightSlave1Talon.configMaxOutputVoltage(8);
+		if (rightSlave2Talon != null) rightSlave2Talon.configMaxOutputVoltage(8);
 		
 		// Configure master talon feedback devices
 		leftMasterTalon.setFeedbackDevice(CANTalon.FeedbackDevice.QuadEncoder);
