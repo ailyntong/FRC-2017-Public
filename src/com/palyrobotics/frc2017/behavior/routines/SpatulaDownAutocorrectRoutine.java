@@ -32,6 +32,7 @@ public class SpatulaDownAutocorrectRoutine extends Routine {
 		case CENTERING:
 			commands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.CENTER;
 			commands.wantedSliderState = Slider.SliderState.AUTOMATIC_POSITIONING;
+			commands.wantedSpatulaState = Spatula.SpatulaState.UP;
 			if (System.currentTimeMillis()-mStartTime > 300 && Robot.getRobotState().sliderVelocity == 0) {
 				mState = AutocorrectState.FLIPPING;
 				break;
@@ -39,7 +40,6 @@ public class SpatulaDownAutocorrectRoutine extends Routine {
 			break;
 		case FLIPPING:
 			commands.wantedSpatulaState = Spatula.SpatulaState.DOWN;
-			commands.wantedIntakeState = Intake.IntakeState.EXPEL;
 			break;
 		}
 		

@@ -181,6 +181,15 @@ public class Slider extends Subsystem implements SubsystemLoop {
 	 * Encapsulate to use in both run and update methods
 	 */
 	private void setManualOutput(Commands commands) {
+		if (mRobotState == null) {
+			mOutput.setVoltage(commands.sliderStickInput.x*Constants.kSliderMaxVoltage);
+			return;
+		}
+		if (mRobotState.sliderEncoder < -5 * Constants.kSliderTicksPerInch
+				|| mRobotState.sliderEncoder > 5 * Constants.kSliderTicksPerInch) {
+			mOutput.setVoltage(0);
+			return;
+		}
 		mOutput.setVoltage(commands.sliderStickInput.x*Constants.kSliderMaxVoltage);
 	}
 	

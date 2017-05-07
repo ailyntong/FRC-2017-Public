@@ -33,7 +33,7 @@ public class AutoModeSelector {
 	 * comment for which auto mode the selectedIndex refers to
 	 */
 
-	int selectedIndex = AutoIndices.TRAJECTORY_CENTER.get();
+	int selectedIndex = 10;//AutoIndices.TRAJECTORY_CENTER.get();
 
 	public static AutoModeSelector getInstance() {
 		if (instance == null) {
@@ -68,6 +68,7 @@ public class AutoModeSelector {
   /*7*/registerAutonomous(new TrajectorySidePegAutoMode(SideAutoVariant.RED_LOADING, TrajectorySidePostVariant.BACKUP));
   /*8*/registerAutonomous(new TestAutoMode());
   /*9*/registerAutonomous(new TestTrajectoryAutoMode());
+  /*10*/registerAutonomous(new DemoAutoMode());
 	}
 
 	/**

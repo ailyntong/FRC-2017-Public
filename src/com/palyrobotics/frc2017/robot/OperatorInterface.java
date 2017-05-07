@@ -1,5 +1,6 @@
 package com.palyrobotics.frc2017.robot;
 
+import com.palyrobotics.frc2017.behavior.routines.SpatulaDownAutocorrectRoutine;
 import com.palyrobotics.frc2017.behavior.routines.scoring.ManualControlSliderRoutine;
 import com.palyrobotics.frc2017.behavior.routines.scoring.AutocorrectPositioningSliderRoutine;
 import com.palyrobotics.frc2017.behavior.routines.scoring.PositioningSliderRoutine;
@@ -103,7 +104,7 @@ public class OperatorInterface {
 
 		// Spatula
 		if (mSliderStick.getRawButton(8)) {
-			newCommands.wantedSpatulaState = Spatula.SpatulaState.DOWN;
+			newCommands.addWantedRoutine(new SpatulaDownAutocorrectRoutine());
 		} else if (mSliderStick.getRawButton(9)) {
 			newCommands.wantedSpatulaState = Spatula.SpatulaState.UP;
 		}
