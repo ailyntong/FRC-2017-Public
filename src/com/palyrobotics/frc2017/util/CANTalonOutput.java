@@ -53,6 +53,12 @@ public class CANTalonOutput {
 		this.profile = talon.profile;
 	}
 	
+	/**
+	 * Custom constructor
+	 * @param controlMode
+	 * @param gains
+	 * @param setpoint
+	 */
 	public CANTalonOutput(CANTalon.TalonControlMode controlMode, Gains gains, double setpoint) {
 		this.controlMode = controlMode;
 		this.setpoint = setpoint;
@@ -63,10 +69,16 @@ public class CANTalonOutput {
 		cruiseVel = 0;
 	}
 
+	/**
+	 * @return One of: PercentVBus, Speed, Current, Voltage, Follower, MotionProfile, MotionMagic, Disabled
+	 */
 	public CANTalon.TalonControlMode getControlMode() {
 		return controlMode;
 	}
 
+	/**
+	 * @return Setpoint appropriate for current control mode
+	 */
 	public double getSetpoint() {
 		return setpoint;
 	}

@@ -10,27 +10,32 @@ import com.palyrobotics.frc2017.util.CANTalonOutput;
 import com.palyrobotics.frc2017.util.Pose;
 import com.palyrobotics.frc2017.util.archive.DriveSignal;
 
+/**
+ * Controller that uses a gyroscope to update a motion magic control loop
+ * @author Ailyn Tong
+ */
 public class GyroMotionMagicTurnAngleController implements DriveController {
-	private Pose mCachedPose;
+	private Pose mCachedPose;	// Store previous pose
 	private final double mTargetHeading;	// Absolute setpoint in degrees
-	private double mLeftTarget, mRightTarget;
-	private CANTalonOutput mLeftOutput, mRightOutput;
+	private double mLeftTarget, mRightTarget;	// Absolute setpoint in encoder ticks
+	private CANTalonOutput mLeftOutput, mRightOutput;	// Master talon outputs
 	
-	private final Gains mGains;
-	private final double mCruiseVel, mMaxAccel;
+	private final Gains mGains;	// Motion magic gains
+	private final double mCruiseVel, mMaxAccel;	// Motion magic gains
 	
-	private final double kInchesPerDegree, kTicksPerInch;
-	private final double kTolerance;
+	private final double kInchesPerDegree, kTicksPerInch;	// Unit conversion
+	private final double kTolerance;	// Acceptable angle tolerance in degrees
 		
 	/**
-	 * 
-	 * @param priorSetpoint
+	 * Constructor
+	 * @param priorSetpoint Original pose
 	 * @param angle Relative setpoint in degrees
 	 */
 	public GyroMotionMagicTurnAngleController(Pose priorSetpoint, double angle) {
 		mCachedPose = priorSetpoint;
 		mTargetHeading = priorSetpoint.heading + angle;
 		
+		// Instantiate constants for correct robot
 		if (Constants.kRobotName == Constants.RobotName.DERICA) {
 			mGains = Gains.dericaPosition;
 			mCruiseVel = Gains.kDericaTurnMotionMagicCruiseVelocity;
@@ -46,20 +51,22 @@ public class GyroMotionMagicTurnAngleController implements DriveController {
 			kTicksPerInch = Constants.kDriveTicksPerInch;
 			kTolerance = Constants.kAcceptableTurnAngleError;
 		}
-		
+		// Initialize setpoints
 		System.out.println("Current heading: " + mCachedPose.heading);
 		System.out.println("Target heading: " + mTargetHeading);
 		mLeftTarget = priorSetpoint.leftEnc - (angle * kInchesPerDegree * kTicksPerInch);
-//		System.out.println("Left target: " + mLeftTarget);
 		mRightTarget = priorSetpoint.rightEnc + (angle * kInchesPerDegree * kTicksPerInch);
-//		System.out.println("Right target: " + mRightTarget);
-		
+		// Initialize CANTalonOutputs
 		mLeftOutput = new CANTalonOutput();
 		mLeftOutput.setMotionMagic(mLeftTarget, mGains, mCruiseVel, mMaxAccel);
 		mRightOutput = new CANTalonOutput();
 		mRightOutput.setMotionMagic(mRightTarget, mGains, mCruiseVel, mMaxAccel);
 	}
 
+	/**
+	 * Uses error to update motion magic setpoint
+	 * @return Updated DriveSignal
+	 */
 	@Override
 	public DriveSignal update(RobotState state) {
 		mCachedPose = state.drivePose;
@@ -75,34 +82,20 @@ public class GyroMotionMagicTurnAngleController implements DriveController {
 		return new DriveSignal(mLeftOutput, mRightOutput);
 	}
 
+	/**
+	 * @return Setpoint
+	 */
 	@Override
 	public Pose getSetpoint() {
 		return new Pose(0, 0, 0, 0, 0, 0, mTargetHeading, 0);
 	}
 
+	/**
+	 * @return Whether or not the robot is within position and velocity tolerance
+	 */
 	@Override
 	public boolean onTarget() {
 		// Wait for controller to be added before finishing routine
-//		if (mLeftOutput.getSetpoint() != Robot.getRobotState().leftSetpoint) {
-//			System.out.println("Mismatched desired talon and actual talon setpoints! desired, actual");
-//			System.out.println("Left: " + mLeftOutput.getSetpoint()+", "+Robot.getRobotState().leftSetpoint);
-//			return false;
-//		}
-//		else if (mRightOutput.getSetpoint() != Robot.getRobotState().rightSetpoint) {
-//			System.out.println("Mismatched desired talon and actual talon setpoints! desired, actual");
-//			System.out.println("Right: " + mRightOutput.getSetpoint()+", "+Robot.getRobotState().rightSetpoint);
-//			return false;
-//		}
-//		else if (mLeftOutput.getControlMode() != Robot.getRobotState().leftControlMode) {
-//			System.out.println("Mismatched desired talon and actual talon states!");
-//			System.out.println(mLeftOutput.getControlMode() + ", "+Robot.getRobotState().leftControlMode);
-//			return false;
-//		}
-//		else if (mRightOutput.getControlMode() != Robot.getRobotState().rightControlMode) {
-//			System.out.println("Mismatched desired talon and actual talon states!");
-//			System.out.println(mRightOutput.getControlMode()+","+Robot.getRobotState().rightControlMode);
-//			return false;
-//		}
 		if (mCachedPose == null) {
 			System.out.println("Cached pose is null");
 			return false;

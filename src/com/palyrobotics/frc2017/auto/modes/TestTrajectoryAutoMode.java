@@ -13,12 +13,17 @@ import java.util.ArrayList;
 
 /**
  * Created by Nihar on 4/5/17.
+ * An autonomous for testing motion profiles
  */
 public class TestTrajectoryAutoMode extends AutoModeBase {
 	private Path mPath;
-	private String mDesired;
+	private String mDesired;	// Name of path
 
+	/**
+	 * Constructor
+	 */
 	public TestTrajectoryAutoMode() {
+		// Load path
 		mDesired = "RedCenter";
 		AutoPathLoader.loadPaths();
 		mPath = AutoPathLoader.get(mDesired);
@@ -32,6 +37,9 @@ public class TestTrajectoryAutoMode extends AutoModeBase {
 	public void prestart() {
 	}
 
+	/**
+	 * @return A SequentialRoutine that represents a series of autonomous actions
+	 */
 	@Override
 	public Routine getRoutine() {
 		ArrayList<Routine> sequence = new ArrayList<>();

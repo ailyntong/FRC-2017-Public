@@ -5,15 +5,25 @@ import com.palyrobotics.frc2017.config.Commands;
 import com.palyrobotics.frc2017.subsystems.Drive;
 import com.palyrobotics.frc2017.util.Subsystem;
 
+/**
+ * Routine that drives straight a set distance
+ * @author Robbie Selwyn
+ *
+ */
 public class DriveStraightRoutine extends Routine {
-
-	private double distance;
+	private double mDistance;	// inches
 	
+	/**
+	 * Constructor
+	 * @param distance Distance in inches
+	 */
 	public DriveStraightRoutine(double distance) {
-		this.distance = distance;
+		this.mDistance = distance;
 	}
 
-	
+	/**
+	 * @return Set of subsystems required by routine
+	 */
 	@Override
 	public Subsystem[] getRequiredSubsystems() {
 		return new Subsystem[]{drive};
@@ -21,7 +31,7 @@ public class DriveStraightRoutine extends Routine {
 	/*
 	 * START = Set new drive setpoint
 	 * DRIVING = Waiting to reach drive setpoint
-	 * DONE = reached target or not operating
+	 * DONE = Reached target or not operating
 	 */
 	private enum DriveStraightRoutineState {
 		START, DRIVING, DONE
@@ -29,28 +39,35 @@ public class DriveStraightRoutine extends Routine {
 
 	DriveStraightRoutineState state = DriveStraightRoutineState.START;
 	
+	/**
+	 * Reset drivetrain
+	 */
 	@Override
 	public void start() {
 		drive.setNeutral();
 		state = DriveStraightRoutineState.START;
 	}
 
+	/**
+	 * Update setpoints
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands update(Commands commands) {
 		Commands output = commands.copy();
 		switch(state) {
-		case START:
-			drive.setDriveStraight(distance);
+		case START:	// Set drive controller
+			drive.setDriveStraight(mDistance);
 			output.wantedDriveState = Drive.DriveState.ON_BOARD_CONTROLLER;
 			state = DriveStraightRoutineState.DRIVING;
 			break;
-		case DRIVING:
+		case DRIVING:	// Update drive controller
 			output.wantedDriveState = Drive.DriveState.ON_BOARD_CONTROLLER;
 			if (drive.controllerOnTarget() && drive.hasController()) {
 				state = DriveStraightRoutineState.DONE;
 			}
 			break;
-		case DONE:
+		case DONE:	// Reset drive controller
 			drive.resetController();
 			break;
 		default:
@@ -59,6 +76,10 @@ public class DriveStraightRoutine extends Routine {
 		return output;
 	}
 	
+	/**
+	 * Stop drivetrain
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands cancel(Commands commands) {
 		System.out.println("Cancelling DriveStraightRoutine");
@@ -68,12 +89,17 @@ public class DriveStraightRoutine extends Routine {
 		return commands;
 	}
 
-
+	/**
+	 * @return Whether routine has finished
+	 */
 	@Override
 	public boolean finished() {
 		return state == DriveStraightRoutineState.DONE;
 	}
 	
+	/**
+	 * @return Name of routine
+	 */
 	@Override
 	public String getName() {
 		return "DriveStraightRoutine";

@@ -15,9 +15,9 @@ import com.palyrobotics.frc2017.util.archive.DriveSignal;
  * Controller used for running an offboard can talon srx control loop
  */
 public class CANTalonDriveController implements Drive.DriveController {
-	private final DriveSignal mSignal;
+	private final DriveSignal mSignal;	// Target signal
 
-	private RobotState mCachedState = null;
+	private RobotState mCachedState = null;	// Store robot state
 
 	/**
 	 * Constructs a drive controller to store a signal <br />
@@ -28,14 +28,22 @@ public class CANTalonDriveController implements Drive.DriveController {
 		this.mSignal = new DriveSignal(new CANTalonOutput(signal.leftMotor), new CANTalonOutput(signal.rightMotor));
 	}
 
+	/**
+	 * Updates controller's robot state
+	 * @return Target signal
+	 */
 	@Override
 	public DriveSignal update(RobotState state) {
 		mCachedState = state;
 		return this.mSignal;
 	}
 
+	/**
+	 * @return Setpoint
+	 */
 	@Override
 	public Pose getSetpoint() {
+		// Robot should be stopped at desired position
 		Pose output = mCachedState.drivePose.copy();
 		switch (mSignal.leftMotor.getControlMode()) {
 			case MotionMagic:
@@ -64,6 +72,9 @@ public class CANTalonDriveController implements Drive.DriveController {
 		return output;
 	}
 
+	/**
+	 * @return Whether the robot is within position and velocity tolerance of target
+	 */
 	@Override
 	public boolean onTarget() {
 		if (mCachedState == null) {

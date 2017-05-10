@@ -3,13 +3,10 @@ package com.palyrobotics.frc2017.util.logger;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -23,8 +20,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * No longer uses bufferedwriter, uses Guava Files to append to file
  *
  * FYI, buffered writer closes the underlying filewriter and flushes the buffer
+ * 
+ * @author Nihar Mitra
  */
 public class Logger {
+	// Singleton setup
 	private static Logger instance = new Logger();
 	public static Logger getInstance() {
 		return instance;
@@ -32,7 +32,7 @@ public class Logger {
 
 	private String fileName = null;
 
-	private boolean isEnabled = false;
+	private boolean isEnabled = false;	// whether the logger is enabled
 	
 	private ArrayList<TimestampedString> mData;
 	// Separates to prevent concurrent modification exception
@@ -52,6 +52,11 @@ public class Logger {
 	// Finds the driver station console output
 	private File rioLog;
 
+	/**
+	 * Set the main log's file name if the file doesn't already exist
+	 * @param fileName Name
+	 * @return Whether or not the file name was set successfully
+	 */
 	public boolean setFileName(String fileName) {
 		if (mainLog != null) {
 			System.err.println("Already created log file");
@@ -72,11 +77,13 @@ public class Logger {
 			mWritingThread.start();
 			return;
 		}
+		// Default uses date as file name
 		Date date = new Date();
 		if (fileName == null) {
 			fileName = new SimpleDateFormat("MMMdd HH-mm").format(date);
 		}
 		String os = System.getProperty("os.name");
+		// Create file using appropriate path for os
 		String filePath;
 		if (os.startsWith("Mac")) {
 			filePath = "logs" + File.separatorChar + fileName;
@@ -91,6 +98,7 @@ public class Logger {
 			rioLog = new File("/var/local/natinst/log/FRC_UserProgram.log");
 		}
 		mainLog = new File(filePath+File.separatorChar+"log.log");
+		// Append a number (ex. file1) each new log with the same name
 		while (mainLog.exists()) {
 			duplicatePrevent++;
 			mainLog = new File(filePath+File.separatorChar+"log"+duplicatePrevent+".log");
@@ -114,7 +122,7 @@ public class Logger {
 
 	/**
 	 * Called on subsystem thread
-	 * @param value
+	 * @param value will call .toString()
 	 */
 	public void logSubsystemThread(Object value) {
 		try {
@@ -126,7 +134,7 @@ public class Logger {
 
 	/**
 	 * Called on subsystem thread
-	 * @param key
+	 * @param key will be paired with the object
 	 * @param value will call .toString()
 	 */
 	public void logSubsystemThread(String key, Object value) {
@@ -139,7 +147,7 @@ public class Logger {
 
 	/**
 	 * Called on robot thread
-	 * @param value
+	 * @param value will call .toString()
 	 */
 	public void logRobotThread(Object value) {
 		try {
@@ -162,9 +170,18 @@ public class Logger {
 		}
 	}
 	
+	/**
+	 * Interrupt the thread
+	 */
 	public synchronized void cleanup() {
 		mWritingThread.interrupt();
 	}
+	
+	/**
+	 * Constructor
+	 * Starts Runnable that continuously sorts and adds data to the log
+	 * Runs cleanup if thread is interrupted
+	 */
 	private Logger() {
 		mData = new ArrayList<>();
 		mRunnable = () -> {
@@ -201,6 +218,9 @@ public class Logger {
 		};
 	}
 
+	/**
+	 * @return Path of log file
+	 */
 	public String getLogPath() {
 		if (mainLog != null) {
 			return mainLog.getAbsolutePath();

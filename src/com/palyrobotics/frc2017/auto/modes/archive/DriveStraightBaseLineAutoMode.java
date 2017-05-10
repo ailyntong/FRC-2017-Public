@@ -13,8 +13,12 @@ import com.palyrobotics.frc2017.util.logger.Logger;
  */
 public class DriveStraightBaseLineAutoMode extends AutoModeBase {
 	private DriveStraightRoutine mRoutine;
-	private final CenterPegAutoMode.Alliance mAlliance;
+	private final CenterPegAutoMode.Alliance mAlliance;	// Red vs blue
 	
+	/**
+	 * Constructor
+	 * @param alliance Red or blue side
+	 */
 	public DriveStraightBaseLineAutoMode(CenterPegAutoMode.Alliance alliance) {
 		mAlliance = alliance;
 	}

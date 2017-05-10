@@ -19,6 +19,10 @@ import com.palyrobotics.frc2017.util.logger.Logger;
 
 import static com.palyrobotics.frc2017.auto.modes.SidePegAutoMode.SideAutoVariant;
 
+/**
+ * Motion magic side peg autonomous with drive to neutral zone
+ * @author Robbie Selwyn
+ */
 public class SidePegAutoToCenterAutoMode extends AutoModeBase {
 	// Store configuration on construction
 	private final SideAutoVariant mVariant;
@@ -29,13 +33,13 @@ public class SidePegAutoToCenterAutoMode extends AutoModeBase {
 	// Long distance vs short distance
 	private Gains mLongGains, mShortGains;
 
-	private final double pilotWaitTime = 1.5; // time in seconds
-	private final double backupDistance = 10;	// distance in inches
-	private final double driveToCenter = 12 * 20;
+	private final double kPilotWaitTime = 1.5; // time in seconds
+	private final double kBackupDistance = 10;	// distance in inches
+	private final double kDriveToCenter = 12 * 20;
 	
 
-	double initialSliderPosition = 0;
-	double backupPosition = 0;
+	double mInitialSliderPosition = 0;
+	double mBackupPosition = 0;
 
 	public SidePegAutoToCenterAutoMode(SideAutoVariant direction, boolean backup) {
 		mVariant = direction;
@@ -61,29 +65,29 @@ public class SidePegAutoToCenterAutoMode extends AutoModeBase {
 		// NOTE: switch case falling, split by lefts vs rights
 		switch (mVariant) {
 		case RED_LOADING:
-			backupPosition = 3;
+			mBackupPosition = 3;
 			sequence.add(new EncoderTurnAngleRoutine(Constants.kSidePegTurnAngleDegrees));
 			break;
 		case BLUE_BOILER:
-			backupPosition = 1; //-3
+			mBackupPosition = 1; //-3
 			sequence.add(new EncoderTurnAngleRoutine(Constants.kSidePegTurnAngleDegrees));
 			break;
 		case RED_BOILER:
-			backupPosition = 2;
+			mBackupPosition = 2;
 			sequence.add(new EncoderTurnAngleRoutine(-Constants.kSidePegTurnAngleDegrees));
 			break;
 		case BLUE_LOADING:
-			backupPosition = -4;
+			mBackupPosition = -4;
 			sequence.add(new EncoderTurnAngleRoutine(-Constants.kSidePegTurnAngleDegrees));
 			break;
 		}
 		
 		sequence.add(getDriveToAirship());
-		sequence.add(new TimeoutRoutine(pilotWaitTime));	// Wait 2.5s so pilot can pull gear out
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));	// Wait 2.5s so pilot can pull gear out
 		
 		ArrayList<Routine> parallel = new ArrayList<Routine>();
 		// In parallel, back up and drop the spatula
-		parallel.add(getBackup(backupPosition));
+		parallel.add(getBackup(mBackupPosition));
 		parallel.add(new SpatulaDownAutocorrectRoutine());
 		
 		sequence.add(new ParallelRoutine(parallel));
@@ -113,7 +117,7 @@ public class SidePegAutoToCenterAutoMode extends AutoModeBase {
 		DriveSignal driveToCenter = DriveSignal.getNeutralSignal();
 
 		// Back up an additional 12 inches to allow the gear to fully exit
-		double driveToCenterSetPoint = this.driveToCenter * Constants.kDriveTicksPerInch;
+		double driveToCenterSetPoint = this.kDriveToCenter * Constants.kDriveTicksPerInch;
 		driveToCenter.leftMotor.setMotionMagic(driveToCenterSetPoint, mShortGains, 
 				Gains.kSteikShortDriveMotionMagicCruiseVelocity, Gains.kSteikShortDriveMotionMagicMaxAcceleration);
 		driveToCenter.rightMotor.setMotionMagic(driveToCenterSetPoint, mShortGains, 
@@ -134,20 +138,20 @@ public class SidePegAutoToCenterAutoMode extends AutoModeBase {
 		switch (mVariant) {
 		// loading station side
 		case RED_LOADING:
-			initialSliderPosition = 0;
+			mInitialSliderPosition = 0;
 			driveForwardSetpoint = AutoDistances.kRedLoadingStationForwardDistanceInches * Constants.kDriveTicksPerInch;
 			break;
 		case BLUE_LOADING:
-			initialSliderPosition = 0;
+			mInitialSliderPosition = 0;
 			driveForwardSetpoint = AutoDistances.kBlueLoadingStationForwardDistanceInches * Constants.kDriveTicksPerInch;
 			break;
 		// boiler side
 		case RED_BOILER:
-			initialSliderPosition = 0;
+			mInitialSliderPosition = 0;
 			driveForwardSetpoint = AutoDistances.kRedBoilerForwardDistanceInches * Constants.kDriveTicksPerInch;
 			break;
 		case BLUE_BOILER:
-			initialSliderPosition = 0;
+			mInitialSliderPosition = 0;
 			driveForwardSetpoint = AutoDistances.kBlueBoilerForwardDistanceInches * Constants.kDriveTicksPerInch;
 			break;
 		default:
@@ -164,7 +168,7 @@ public class SidePegAutoToCenterAutoMode extends AutoModeBase {
 		Logger.getInstance().logRobotThread("Drive forward", driveForward);
 		ArrayList<Routine> initialSlide = new ArrayList<>();
 		initialSlide.add(new CANTalonRoutine(driveForward, true));
-		initialSlide.add(new CustomPositioningSliderRoutine(initialSliderPosition));
+		initialSlide.add(new CustomPositioningSliderRoutine(mInitialSliderPosition));
 		return new ParallelRoutine(initialSlide);
 	}
 	/*
@@ -207,10 +211,9 @@ public class SidePegAutoToCenterAutoMode extends AutoModeBase {
 	 */
 	private SequentialRoutine getBackup(double sliderPosition) {
 		DriveSignal driveBackup = DriveSignal.getNeutralSignal();
-		DriveSignal driveReturn = DriveSignal.getNeutralSignal();
 
 		// Back up an additional 12 inches to allow the gear to fully exit
-		double driveBackupSetpoint = -(backupDistance + 12) * Constants.kDriveTicksPerInch;
+		double driveBackupSetpoint = -(kBackupDistance + 12) * Constants.kDriveTicksPerInch;
 		driveBackup.leftMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
 				Gains.kSteikShortDriveMotionMagicCruiseVelocity, Gains.kSteikShortDriveMotionMagicMaxAcceleration);
 		driveBackup.rightMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
@@ -244,10 +247,10 @@ public class SidePegAutoToCenterAutoMode extends AutoModeBase {
 			name = "SidePeg";
 			break;
 		}
-		name += "SliderInitialMove"+initialSliderPosition;
+		name += "SliderInitialMove"+mInitialSliderPosition;
 		name += "EncoderTurn";
 		if (mBackup) {
-			name += "Backup"+backupPosition;
+			name += "Backup"+mBackupPosition;
 		} else {
 			name += "NotBackup";
 		}

@@ -3,11 +3,7 @@ package com.palyrobotics.frc2017.robot;
 import com.palyrobotics.frc2017.behavior.routines.SpatulaDownAutocorrectRoutine;
 import com.palyrobotics.frc2017.behavior.routines.scoring.ManualControlSliderRoutine;
 import com.palyrobotics.frc2017.behavior.routines.scoring.AutocorrectPositioningSliderRoutine;
-import com.palyrobotics.frc2017.behavior.routines.scoring.PositioningSliderRoutine;
 import com.palyrobotics.frc2017.subsystems.*;
-import com.palyrobotics.frc2017.util.DoubleClickTimer;
-import com.palyrobotics.frc2017.util.logger.Logger;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Joystick;
 
 import com.palyrobotics.frc2017.behavior.Routine;
@@ -21,6 +17,7 @@ import com.palyrobotics.frc2017.config.Commands.*;
  *
  */
 public class OperatorInterface {
+	// Singleton setup
 	private static OperatorInterface instance = new OperatorInterface();
 
 	public static OperatorInterface getInstance() {
@@ -29,16 +26,13 @@ public class OperatorInterface {
 
 	private OperatorInterface() {}
 
+	// Joystick references
 	private HardwareAdapter.Joysticks mJoysticks = HardwareAdapter.getInstance().getJoysticks();
 	private Joystick mDriveStick = mJoysticks.driveStick;
 	private Joystick mTurnStick = mJoysticks.turnStick;
 	private Joystick mSliderStick = mJoysticks.sliderStick;
 	private Joystick mClimberStick = mJoysticks.climberStick;
 	
-	// Adjust parameters as needed, default for now
-	private DoubleClickTimer sliderLeft = new DoubleClickTimer();
-	private DoubleClickTimer sliderRight = new DoubleClickTimer();
-
 	/**
 	 * Helper method to only add routines that aren't already in wantedRoutines
 	 * @param commands Current set of commands being modified
@@ -57,21 +51,25 @@ public class OperatorInterface {
 
 	/**
 	 * Returns modified commands
-	 * @param prevCommands
+	 * @param prevCommands Original commands
+	 * @return New commands modified by joystick input
 	 */
 	public Commands updateCommands(Commands prevCommands) {
 		Commands newCommands = prevCommands.copy();
+		
+		// Drivetrain should default to chezy
 		if(prevCommands.wantedDriveState != Drive.DriveState.OFF_BOARD_CONTROLLER
 				&& prevCommands.wantedDriveState != Drive.DriveState.ON_BOARD_CONTROLLER) {
 			newCommands.wantedDriveState = Drive.DriveState.CHEZY;
 		}
+		
+		// Initialize joystick input
 		newCommands.leftStickInput = new JoystickInput(mDriveStick.getX(), mDriveStick.getY(), mDriveStick.getTrigger());
 		newCommands.rightStickInput = new JoystickInput(mTurnStick.getX(), mTurnStick.getY(), mTurnStick.getTrigger());
 		newCommands.sliderStickInput = new JoystickInput(mSliderStick.getX(), mSliderStick.getY(), mSliderStick.getTrigger());
 		newCommands.climberStickInput = new JoystickInput(mClimberStick.getX(), mClimberStick.getY(), mClimberStick.getTrigger());
 
 		// Flippers
-		//TODO figure out flipper controls
 		// Left Flipper
 //		if (mSliderStick.getRawButton(1)) {
 //			newCommands.wantedFlipperSignal.leftFlipper = DoubleSolenoid.Value.kForward;
@@ -86,10 +84,10 @@ public class OperatorInterface {
 //		}
 
 		// Slider
-		if (mSliderStick.getRawButton(2)) {	// opposite of preferred thumb position
+		if (mSliderStick.getRawButton(2)) {
 			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.NONE;
 			newCommands.addWantedRoutine(new ManualControlSliderRoutine());
-		} else if (mSliderStick.getRawButton(3)) {	// preferred thumb position
+		} else if (mSliderStick.getRawButton(3)) {
 			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.CENTER;
 			newCommands.addWantedRoutine(new AutocorrectPositioningSliderRoutine(Slider.SliderTarget.CENTER));
 		} else if (mSliderStick.getRawButton(4)) {
@@ -128,6 +126,7 @@ public class OperatorInterface {
 		} else if (mDriveStick.getRawButton(8) || mDriveStick.getRawButton(10) || mDriveStick.getRawButton(12)) { // 8, 10, 12
 			newCommands.climberStickInput.y = -0.8;
 		}
+
 		// Climber joystick may be set in a virtual sense
 		if (newCommands.climberStickInput.y <= 0.02) {
 			newCommands.wantedClimberState = Climber.ClimberState.MANUAL;

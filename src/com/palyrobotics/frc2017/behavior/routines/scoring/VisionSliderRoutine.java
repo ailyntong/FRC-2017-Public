@@ -13,23 +13,36 @@ import com.palyrobotics.frc2017.subsystems.Slider.SliderTarget;
 import com.palyrobotics.frc2017.util.Subsystem;
 import com.palyrobotics.frc2017.vision.AndroidConnectionHelper;
 
+/**
+ * Routine that uses vision to move slider
+ * @author Nihar Mitra
+ */
 public class VisionSliderRoutine extends Routine {
-	private double startTime = 0;
+	private double mStartTime = 0;
 	
 	// Used to make sure vision setpoint is only sent once
 	private enum VisionPositioningState {
 		START, SENT
 	}
 	private VisionPositioningState mState = VisionPositioningState.START;
-	double offset = 7.5;
+	
+	private final double kOffset = 7.5;	// Compensation for camera position
+	
 	public VisionSliderRoutine() {
 	}
 	
+	/**
+	 * Register start time
+	 */
 	@Override
 	public void start() {
-		startTime = System.currentTimeMillis();
+		mStartTime = System.currentTimeMillis();
 	}
 
+	/**
+	 * Determine vision setpoint and update slider setpoints
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands update(Commands commands) {
 		commands.robotSetpoints.sliderSetpoint = SliderTarget.CUSTOM;
@@ -39,13 +52,13 @@ public class VisionSliderRoutine extends Routine {
 		if (visionSetpoint >= 1.5) {
 			visionSetpoint = -7;
 		} 
-		else if (visionSetpoint <= -7-offset) {
+		else if (visionSetpoint <= -7-kOffset) {
 			visionSetpoint = -7;
 		} // extend motion
 		else if (visionSetpoint < 0) {
-			visionSetpoint += offset;
+			visionSetpoint += kOffset;
 		} else {
-			visionSetpoint += offset;
+			visionSetpoint += kOffset;
 		}
 		System.out.println("Vision setpoint pre min/max: "+visionSetpoint);
 		visionSetpoint = Math.max(-7, Math.min(visionSetpoint, 7));
@@ -54,8 +67,9 @@ public class VisionSliderRoutine extends Routine {
 		}
 		commands.robotSetpoints.sliderCustomSetpoint =
 				Optional.of(visionSetpoint * Constants.kSliderRevolutionsPerInch);
+		
 		switch(mState) {
-		case START:
+		case START:	// run only once
 			commands.wantedSliderState = Slider.SliderState.CUSTOM_POSITIONING;
 			try {
 				slider.run(commands, this);
@@ -71,6 +85,10 @@ public class VisionSliderRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * Stop slider
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands cancel(Commands commands) {
 		commands.wantedSliderState = SliderState.IDLE;
@@ -83,18 +101,27 @@ public class VisionSliderRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * @return Whether setpoint has been sent and slider is on target
+	 */
 	@Override
 	public boolean finished() {
 		return mState==VisionPositioningState.SENT && 
-				(System.currentTimeMillis() - startTime > 200) &&
+				(System.currentTimeMillis() - mStartTime > 200) &&
 				Robot.getRobotState().sliderVelocity == 0;
 	}
 
+	/**
+	 * @return Set of subsystems required by routine
+	 */
 	@Override
 	public Subsystem[] getRequiredSubsystems() {
 		return new Subsystem[]{Slider.getInstance(), Spatula.getInstance()};
 	}
 
+	/**
+	 * @return Name of routine
+	 */
 	@Override
 	public String getName() {
 		return "SliderVisionPositioningRoutine";

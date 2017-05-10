@@ -1,12 +1,10 @@
 package com.palyrobotics.frc2017.robot;
 
-import com.ctre.CANTalon;
 import com.palyrobotics.frc2017.auto.AutoModeBase;
 import com.palyrobotics.frc2017.auto.AutoModeSelector;
 import com.palyrobotics.frc2017.behavior.RoutineManager;
 import com.palyrobotics.frc2017.config.Commands;
 import com.palyrobotics.frc2017.config.Constants;
-import com.palyrobotics.frc2017.config.Gains;
 import com.palyrobotics.frc2017.config.RobotState;
 import com.palyrobotics.frc2017.config.dashboard.DashboardManager;
 import com.palyrobotics.frc2017.config.dashboard.DashboardValue;
@@ -19,6 +17,10 @@ import com.palyrobotics.frc2017.robot.team254.lib.util.Looper;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 
+/**
+ * Main robot class using WPILib IterativeRobot
+ * @author Nihar Mitra
+ */
 public class Robot extends IterativeRobot {
 	// Instantiate singleton classes
 	private static RobotState robotState = new RobotState();
@@ -50,12 +52,16 @@ public class Robot extends IterativeRobot {
 	// Hardware Updater
 	private HardwareUpdater mHardwareUpdater;
 	
+	/**
+	 * Initialize dashboard, vision app, logger, and subsystems
+	 */
 	@Override
 	public void robotInit() {
 		System.out.println("Start robotInit() for "+Constants.kRobotName.toString());
 		DashboardManager.getInstance().robotInit();
 		AndroidConnectionHelper.getInstance().start();
 		System.out.println("Finished starting");
+		// Log match info
 		mLogger.setFileName("PostQuals");
 		mLogger.start();
 		mLogger.logRobotThread("robotInit() start");
@@ -72,6 +78,7 @@ public class Robot extends IterativeRobot {
 		} catch (NullPointerException e) {
 			mLogger.logRobotThread("Auto: "+e.getMessage());
 		}
+		// Initialize correct subsystems for robot
 		if (Constants.kRobotName == Constants.RobotName.STEIK) {
 			try {
 				mHardwareUpdater = new HardwareUpdater(mDrive, mFlippers, mSlider, mSpatula, mIntake, mClimber);
@@ -91,6 +98,7 @@ public class Robot extends IterativeRobot {
 			}
 			mSubsystemLooper.register(mDrive);
 		}
+		// Initialize hardware
 		mHardwareSensorLooper.register(mHardwareUpdater.getHardwareSensorLoop());
 		mHardwareEnabledLooper.register(mHardwareUpdater.getHardwareEnabledLoop());
 		mHardwareUpdater.initHardware();
@@ -136,12 +144,6 @@ public class Robot extends IterativeRobot {
 
 	@Override
 	public void autonomousPeriodic() {
-//		HardwareAdapter.getInstance().getSlider().sliderTalon.changeControlMode(CANTalon.TalonControlMode.Position);
-//		HardwareAdapter.getInstance().getSlider().sliderTalon.set(1);
-//		System.out.println("Talon stpt:"+HardwareAdapter.getInstance().getSlider().sliderTalon.getSetpoint());
-//		System.out.println("Talon mode:"+HardwareAdapter.getInstance().getSlider().sliderTalon.getControlMode());
-		//		logPeriodic();
-//		System.out.println(robotState.sliderEncoder);
 		mLogger.logRobotThread("Nexus xdist: "+AndroidConnectionHelper.getInstance().getXDist());
 		commands = mRoutineManager.update(commands);
 	}

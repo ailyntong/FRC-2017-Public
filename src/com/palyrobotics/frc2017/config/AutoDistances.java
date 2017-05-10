@@ -1,6 +1,7 @@
 package com.palyrobotics.frc2017.config;
 
 /**
+ * Stores field distances
  * Created by Nihar on 4/13/17.
  */
 public class AutoDistances {

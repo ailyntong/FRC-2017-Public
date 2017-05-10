@@ -69,10 +69,21 @@ public class AutoPathLoader {
 		System.out.println("Parsing paths took: " + (System.currentTimeMillis()-startTime/1000));
 	}
 
+	/**
+	 * Retrieves a path by name
+	 * @param name Name of path
+	 * @return Corresponding path
+	 * @see AutoPathLoader#kPathNames
+	 */
 	public static Path get(String name) {
 		return (Path) paths_.get(name);
 	}
 
+	/**
+	 * Retrives a path by index
+	 * @param index Index of path
+	 * @return Corresponding path
+	 */
 	public static Path getByIndex(int index) {
 		return (Path) paths_.get(kPathNames[index]);
 	}

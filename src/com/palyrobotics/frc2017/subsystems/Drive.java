@@ -17,7 +17,6 @@ import com.palyrobotics.frc2017.util.archive.CheesyDriveHelper;
 import com.palyrobotics.frc2017.util.archive.DriveSignal;
 import com.palyrobotics.frc2017.util.archive.SubsystemLoop;
 import com.team254.lib.trajectory.Path;
-import com.team254.lib.trajectory.Trajectory;
 
 /**
  * Represents the drivetrain
@@ -25,6 +24,7 @@ import com.team254.lib.trajectory.Trajectory;
  * @author Nihar
  */
 public class Drive extends Subsystem implements SubsystemLoop {
+	// Singleton setup
 	private static Drive instance = new Drive();
 	public static Drive getInstance() {
 		return instance;
@@ -58,13 +58,17 @@ public class Drive extends Subsystem implements SubsystemLoop {
 	// Stores output
 	private DriveSignal mSignal = DriveSignal.getNeutralSignal();
 
+	// Dashboard
 	private DashboardValue motors;
-	
 	private DashboardValue leftEncoder;
 	private DashboardValue rightEncoder;
 	
+	/**
+	 * Constructor
+	 */
 	private Drive() {
 		super("Drive");
+		// Instantiate constants by robot
 		if (Constants.kRobotName == Constants.RobotName.DERICA) {
 			kWheelbaseWidth = 22.0;
 			kTurnSlipFactor = 1.2;
@@ -82,8 +86,8 @@ public class Drive extends Subsystem implements SubsystemLoop {
 			kInchesToTicks = Constants.kDriveTicksPerInch;
 		}
 		
+		// Instantiate dashboard values
 		motors = new DashboardValue("driveSpeedUpdate");
-		
 		leftEncoder = new DashboardValue("leftdriveencoder");
 		rightEncoder = new DashboardValue("rightdriveencoder");
 	}
@@ -106,17 +110,18 @@ public class Drive extends Subsystem implements SubsystemLoop {
 	 */
 	@Override
 	public void update(Commands commands, RobotState state) {
+		// Store robot and drivetrain info
 		mCachedRobotState = state;
 		mCachedPose = state.drivePose.copy();
 		boolean mIsNewState = !(mState == commands.wantedDriveState);
 		mState = commands.wantedDriveState;
 		
 		switch(mState) {
-			case CHEZY:
+			case CHEZY:	// Manual
 				//setDriveOutputs(mCDH.cheesyDrive(commands, mCachedRobotState));
 				setDriveOutputs(mCDH.proportionalDrive(commands, mCachedRobotState));
 				break;
-			case OFF_BOARD_CONTROLLER:
+			case OFF_BOARD_CONTROLLER:	// Talon control loop
 				if (mController == null) {
 					setDriveOutputs(DriveSignal.getNeutralSignal());
 					System.err.println("No offboard controller to use!");
@@ -124,7 +129,7 @@ public class Drive extends Subsystem implements SubsystemLoop {
 				}
 				setDriveOutputs(mController.update(mCachedRobotState));
 				break;
-			case ON_BOARD_CONTROLLER:
+			case ON_BOARD_CONTROLLER:	// Custom control loop on robot
 				if (mController == null) {
 					System.err.println("No onboard controller to use!");
 					commands.wantedDriveState = DriveState.NEUTRAL;
@@ -132,12 +137,12 @@ public class Drive extends Subsystem implements SubsystemLoop {
 					setDriveOutputs(mController.update(mCachedRobotState));
 				}
 				break;
-			case OPEN_LOOP:
+			case OPEN_LOOP:	// Motion profile
 				if (commands.robotSetpoints.drivePowerSetpoint.isPresent()) {
 					setDriveOutputs(commands.robotSetpoints.drivePowerSetpoint.get());
 				}
 				break;
-			case NEUTRAL:
+			case NEUTRAL:	// Idle
 				if(!newController && mIsNewState) {
 					resetController();
 				}
@@ -155,6 +160,7 @@ public class Drive extends Subsystem implements SubsystemLoop {
 		mIsNewState = false;
 		mState = commands.wantedDriveState;
 		
+		// Update dashboard values
 		leftEncoder.updateValue(state.drivePose.leftEnc);
 		rightEncoder.updateValue(state.drivePose.rightEnc);
 		
@@ -169,6 +175,9 @@ public class Drive extends Subsystem implements SubsystemLoop {
 	public void stop() {
 	}
 
+	/**
+	 * @param signal Desired DriveSignal
+	 */
 	private void setDriveOutputs(DriveSignal signal) {
 		mSignal = signal;
 	}
@@ -182,37 +191,58 @@ public class Drive extends Subsystem implements SubsystemLoop {
 		setDriveOutputs(DriveSignal.getNeutralSignal());
 	}
 
+	/**
+	 * CAN Talon motion magic controller
+	 * @param signal Target DriveSignal
+	 */
 	public void setCANTalonController(DriveSignal signal) {
 		mController = new CANTalonDriveController(signal);
 		newController = true;
 	}
 
+	/**
+	 * Bang bang turn angle controller
+	 * @param heading Target angle in degrees
+	 */
 	public void setTurnAngleSetpoint(double heading) {
 		mController = new BangBangTurnAngleController(mCachedPose, heading);
 		newController = true;
 	}
 	
+	/**
+	 * Encoder turn angle controller
+	 * @param angle Target angle in degrees
+	 */
 	public void setTurnAngleEncoderSetpoint(double angle) {
 		System.out.println("Encoder angle "+angle);
 		mController = new EncoderTurnAngleController(mCachedPose, angle);
 		newController = true;
 	}
 	
+	/**
+	 * Gyro turn angle controller
+	 * @param angle Target angle in degrees
+	 */
 	public void setGyroMotionMagicTurnAngleSetpoint(double angle) {
 		mController = new GyroMotionMagicTurnAngleController(mCachedPose, angle);
 		newController = true;
 	}
 
 	/**
-	 * Motion profile hype
+	 * Motion profile controller
 	 * @param path Path to follow
 	 * @param useGyro Should correct heading using gyro or not
+	 * @param inverted Whether or not to invert left/right of path
 	 */
 	public void setTrajectoryController(Path path, Gains.TrajectoryGains gains, boolean useGyro, boolean inverted) {
 		mController = new TrajectoryFollowingController(path, gains, useGyro, inverted);
 		newController = true;
 	}
 
+	/**
+	 * Drive straight controller
+	 * @param distance Target distance in inches
+	 */
 	public void setDriveStraight(double distance) {
 		mController = new DriveStraightController(mCachedPose, distance);
 		newController = true;
@@ -234,22 +264,35 @@ public class Drive extends Subsystem implements SubsystemLoop {
 		return mCachedPose;
 	}
 
+	/**
+	 * @return The current controller being used
+	 */
 	public Drive.DriveController getController() {
 		return mController;
 	}
 
+	/**
+	 * @return If the current controller is on target
+	 */
 	public boolean controllerOnTarget() {
 		return (mController==null || mController.onTarget());
 	}
 
+	/**
+	 * @return If the drivetrain is using a controller
+	 */
 	public boolean hasController() {
 		return mController != null;
 	}
 
+	/**
+	 * Template for drivetrain controllers
+	 * @author Nihar Mitra
+	 */
 	public interface DriveController {
 		DriveSignal update(RobotState state);
 
-		Pose getSetpoint();
+		Pose getSetpoint();	// Target pose
 
 		boolean onTarget();
 	}

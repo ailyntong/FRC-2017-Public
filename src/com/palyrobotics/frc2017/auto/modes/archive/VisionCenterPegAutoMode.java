@@ -23,21 +23,26 @@ import java.util.ArrayList;
  * BBTurnAngle might be replaced with EncoderTurnAngle if no gyro
  */
 public class VisionCenterPegAutoMode extends AutoModeBase {
+	// Store configuration on construction
 	private final CenterPegAutoMode.Alliance mAlliance;
 	private Routine mSequentialRoutine;
 	private boolean mBackup = true;
 	
 	private Gains mShortGains, mLongGains;
-	private double initialSliderPosition;	// distance from center in inches
-	private final double backupDistance = 10;	// distance in inches
-	private final double pilotWaitTime = 3;	// time in seconds
-	private double bonusDistance = 14;
-	private boolean isRightTarget;
+	private double mInitialSliderPosition;	// distance from center in inches
+	private final double kBackupDistance = 10;	// distance in inches
+	private final double kPilotWaitTime = 3;	// time in seconds
+	private double kBonusDistance = 14;	// distance in inches
 
+	/**
+	 * Constructor
+	 * @param alliance Red or blue side
+	 * @param isRightTarget Which target the vision app is tracking
+	 * @param backup Whether to conduct a second scoring attempt
+	 */
 	public VisionCenterPegAutoMode(CenterPegAutoMode.Alliance alliance, boolean isRightTarget, boolean backup) {
 		mAlliance = alliance;
-		this.isRightTarget = isRightTarget;
-		initialSliderPosition = (isRightTarget) ? -7 : 7;
+		mInitialSliderPosition = (isRightTarget) ? -7 : 7;	// Slider should not block vision
 		mShortGains = Gains.steikShortDriveMotionMagicGains;
 		mLongGains = Gains.steikLongDriveMotionMagicGains;
 
@@ -53,6 +58,7 @@ public class VisionCenterPegAutoMode extends AutoModeBase {
 	public void prestart() {
 		String log = "Starting Vision Center Peg Auto Mode";
 		Logger.getInstance().logRobotThread("Starting Vision Center Peg Auto Mode");
+		// Runs regular center peg autonomous if vision app is not connected
 		if (!AndroidConnectionHelper.getInstance().isServerStarted()  || !AndroidConnectionHelper.getInstance().isNexusConnected()) {
 			System.out.println("Failed to find vision server, revert auto");
 			Logger.getInstance().logRobotThread("Failed to find vision server, revert");
@@ -68,7 +74,7 @@ public class VisionCenterPegAutoMode extends AutoModeBase {
 		double driveForwardSetpoint =
 				((mAlliance == CenterPegAutoMode.Alliance.BLUE) ? AutoDistances.k254CenterPegDistanceInches : AutoDistances.k254CenterPegDistanceInches)
 						* Constants.kDriveTicksPerInch;
-		driveForwardSetpoint -= bonusDistance * Constants.kDriveTicksPerInch;
+		driveForwardSetpoint -= kBonusDistance * Constants.kDriveTicksPerInch;
 		// Aegir: right +30
 		// Vali: left +100
 		driveForward.leftMotor.setMotionMagic(driveForwardSetpoint, mLongGains,
@@ -77,23 +83,25 @@ public class VisionCenterPegAutoMode extends AutoModeBase {
 				Gains.kSteikLongDriveMotionMagicCruiseVelocity, Gains.kSteikLongDriveMotionMagicMaxAcceleration);
 		
 		DriveSignal driveBonus = DriveSignal.getNeutralSignal();
-		driveBonus.leftMotor.setMotionMagic(bonusDistance, mShortGains, Gains.kSteikShortDriveMotionMagicCruiseVelocity,
+		driveBonus.leftMotor.setMotionMagic(kBonusDistance, mShortGains, Gains.kSteikShortDriveMotionMagicCruiseVelocity,
 				Gains.kSteikShortDriveMotionMagicMaxAcceleration);
-		driveBonus.rightMotor.setMotionMagic(bonusDistance, mShortGains, Gains.kSteikShortDriveMotionMagicCruiseVelocity,
+		driveBonus.rightMotor.setMotionMagic(kBonusDistance, mShortGains, Gains.kSteikShortDriveMotionMagicCruiseVelocity,
 				Gains.kSteikShortDriveMotionMagicMaxAcceleration);
 		
 		// Drive forward while moving slider to initial position
+		// Stop before reaching the peg, use vision to move slider, then move forward
 		ArrayList<Routine> initialSlide = new ArrayList<>();
 		initialSlide.add(new CANTalonRoutine(driveForward, true));
-		initialSlide.add(new CustomPositioningSliderRoutine(initialSliderPosition));
+		initialSlide.add(new CustomPositioningSliderRoutine(mInitialSliderPosition));
 		sequence.add(new ParallelRoutine(initialSlide));
 		sequence.add(new VisionSliderRoutine());
 		sequence.add(new CANTalonRoutine(driveBonus, true));
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		
+		// Backup, drive forward while repositioning slider, and wait for pilot
 		if (mBackup) {
-			sequence.add(getBackup(-2));		// Move slider slightly to the right
-			sequence.add(new TimeoutRoutine(pilotWaitTime));
+			sequence.add(getBackup(-2));
+			sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		}
 
 		mSequentialRoutine = new SequentialRoutine(sequence);
@@ -111,7 +119,7 @@ public class VisionCenterPegAutoMode extends AutoModeBase {
 		DriveSignal driveBackup = DriveSignal.getNeutralSignal();
 		DriveSignal driveReturn = DriveSignal.getNeutralSignal();
 
-		double driveBackupSetpoint = -backupDistance * Constants.kDriveTicksPerInch;
+		double driveBackupSetpoint = -kBackupDistance * Constants.kDriveTicksPerInch;
 		driveBackup.leftMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
 				Gains.kSteikShortDriveMotionMagicCruiseVelocity, Gains.kSteikShortDriveMotionMagicMaxAcceleration);
 		driveBackup.rightMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
@@ -133,7 +141,7 @@ public class VisionCenterPegAutoMode extends AutoModeBase {
 		parallelSliding.add(new SequentialRoutine(slideSequence));
 		sequence.add(new ParallelRoutine(parallelSliding));
 		sequence.add(new CANTalonRoutine(driveReturn, true));
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		
 		return new SequentialRoutine(sequence);
 	}

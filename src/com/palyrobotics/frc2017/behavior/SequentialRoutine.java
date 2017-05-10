@@ -7,23 +7,35 @@ import java.util.ArrayList;
 
 /**
  * Created by Nihar on 12/27/16.
+ * A compound routine that runs multiple routines in series
  */
 public class SequentialRoutine extends Routine {
 	private ArrayList<Routine> mRoutines;
-	private int mRunningRoutineIndex = 0;
+	private int mRunningRoutineIndex = 0;	// Tracks index of current routine
 	private boolean mIsDone = false;
 	private Subsystem[] mRequiredSubsystems;
 
+	/**
+	 * Constructor
+	 * @param routines Routines to run in series
+	 */
 	public SequentialRoutine(ArrayList<Routine> routines) {
 		mRoutines = routines;
 		mRequiredSubsystems = RoutineManager.sharedSubsystems(mRoutines);
 	}
 
+	/**
+	 * Start current routine
+	 */
 	@Override
 	public void start() {
 		mRoutines.get(mRunningRoutineIndex).start();
 	}
 
+	/**
+	 * Update current routine and move on to the next one if finished
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands update(Commands commands) {
 		Commands output = commands.copy();
@@ -51,6 +63,10 @@ public class SequentialRoutine extends Routine {
 		return output;
 	}
 
+	/**
+	 * Cancel current routine
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands cancel(Commands commands) {
 		//If not all routines finished, cancel the current routine. Otherwise everything is already finished.
@@ -61,11 +77,17 @@ public class SequentialRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * @return Whether or not all routines have finished
+	 */
 	@Override
 	public boolean finished() {
 		return mIsDone;
 	}
 
+	/**
+	 * @return Set of all subsystems used by routines
+	 */
 	@Override
 	public Subsystem[] getRequiredSubsystems() {
 		return mRequiredSubsystems;

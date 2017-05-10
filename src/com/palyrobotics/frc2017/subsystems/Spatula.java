@@ -16,21 +16,26 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
  * Controlled by one DoubleSolenoid which toggles between UP and DOWN
  */
 public class Spatula extends Subsystem implements SubsystemLoop {
+	// Singleton setup
 	private static Spatula instance = new Spatula();
 	private SpatulaState mState = SpatulaState.UP;
 	public static Spatula getInstance() {
 		return instance;
 	}
 	
+	// Determines spatula behavior
 	public enum SpatulaState { UP, DOWN }
 	
 	private DoubleSolenoid.Value mOutput = DoubleSolenoid.Value.kOff;
 
 	private DashboardValue mDv;
 	
+	/**
+	 * Constructor
+	 */
 	private Spatula() {
 		super("Spatula");
-		
+		// Instantiate dashboard value
 		mDv = new DashboardValue("spatulastatus");
 	}
 
@@ -54,15 +59,21 @@ public class Spatula extends Subsystem implements SubsystemLoop {
 			mState = SpatulaState.DOWN;
 			break;
 		}
-	
+		// Updates dashboard value accordingly
 		mDv.updateValue(mOutput.toString() == "kReverse" ? "UP" : "DOWN");
 		DashboardManager.getInstance().publishKVPair(mDv);
 	}
 	
+	/**
+	 * @return The current spatula output
+	 */
 	public DoubleSolenoid.Value getOutput() {
 		return mOutput;
 	}
 	
+	/**
+	 * @return The current spatula state
+	 */
 	public SpatulaState getState() {
 		return mState;
 	}

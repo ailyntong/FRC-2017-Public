@@ -5,6 +5,10 @@ import com.palyrobotics.frc2017.behavior.Routine;
 import com.palyrobotics.frc2017.config.Commands;
 import com.palyrobotics.frc2017.util.Subsystem;
 
+/**
+ * Empty autonomous used primarily to test functionality of RoutineManager
+ * @author Nihar Mitra
+ */
 public class DoNothingAutoMode extends AutoModeBase {
 	@Override
 	public Routine getRoutine() {

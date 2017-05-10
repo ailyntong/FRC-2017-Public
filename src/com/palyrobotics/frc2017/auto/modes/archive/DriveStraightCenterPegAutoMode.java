@@ -35,14 +35,19 @@ public class DriveStraightCenterPegAutoMode extends AutoModeBase {
 	
 	private SequentialRoutine mSequentialRoutine;
 	
-	private double initialSliderPosition;	// distance from center in inches
-	private final double backupDistance = 10;	// distance in inches
-	private final double pilotWaitTime = 2;	// time in seconds
+	private double mInitialSliderPosition;	// distance from center in inches
+	private final double kBackupDistance = 10;	// distance in inches
+	private final double kPilotWaitTime = 2;	// time in seconds
 	
 	// Drop and drive distances
-	private final double clearAirshipDistance = 5 * 14;	// distance in inches
-	private final double neutralZoneDistance = 12 * 14;	// distance in inches
+	private final double kClearAirshipDistance = 5 * 14;	// distance in inches
+	private final double kNeutralZoneDistance = 12 * 14;	// distance in inches
 
+	/**
+	 * Constructor
+	 * @param alliance Red or blue side
+	 * @param variant Desired action after initial attempt
+	 */
 	public DriveStraightCenterPegAutoMode(CenterPegAutoMode.Alliance alliance, CenterAutoPostVariant variant) {
 		mAlliance = alliance;
 		mVariant = variant;
@@ -63,34 +68,38 @@ public class DriveStraightCenterPegAutoMode extends AutoModeBase {
 		double driveForwardSetpoint =
 				((mAlliance == CenterPegAutoMode.Alliance.BLUE) ? AutoDistances.kBlueCenterPegDistanceInches : AutoDistances.kRedCenterPegDistanceInches);
 		
-		initialSliderPosition = (mAlliance == CenterPegAutoMode.Alliance.BLUE) ? -2.5 : 0;
+		mInitialSliderPosition = (mAlliance == CenterPegAutoMode.Alliance.BLUE) ? -2.5 : 0;
 		
 		// Drive forward while moving slider to initial position
 		ArrayList<Routine> initialSlide = new ArrayList<>();
 		initialSlide.add(new DriveStraightRoutine(driveForwardSetpoint));
-		initialSlide.add(new CustomPositioningSliderRoutine(initialSliderPosition));
+		initialSlide.add(new CustomPositioningSliderRoutine(mInitialSliderPosition));
 		sequence.add(new ParallelRoutine(initialSlide));
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		
+		// Add additional routines based on desired post-score action
 		switch (mVariant) {
 		case NONE:
 			break;
 		case BACKUP:
+			// Backup, drive forward while repositioning slider, and wait for pilot
 			double backup = (mAlliance == CenterPegAutoMode.Alliance.BLUE) ? 0 : 5;
 			sequence.add(getBackup(backup));
-			sequence.add(new TimeoutRoutine(pilotWaitTime));
+			sequence.add(new TimeoutRoutine(kPilotWaitTime));
 			break;
 		case NEUTRAL_ZONE_LEFT:
+			// Drive around left side of airship towards neutral zone
 			sequence.add(getDriveToNeutralZone(-90));
 			break;
 		case NEUTRAL_ZONE_RIGHT:
+			// Drive around right side of airship towards neutral zone
 			sequence.add(getDriveToNeutralZone(90));
 			break;
 		}
 
-		for (Routine r : sequence) {
-			System.out.println(r.getName());
-		}
+//		for (Routine r : sequence) {
+//			System.out.println(r.getName());
+//		}
 
 		mSequentialRoutine = new SequentialRoutine(sequence);
 	}
@@ -116,7 +125,7 @@ public class DriveStraightCenterPegAutoMode extends AutoModeBase {
 	 * GET BACKUP
 	 */
 	private SequentialRoutine getBackup(double sliderPosition) {
-		double driveBackupSetpoint = -backupDistance;
+		double driveBackupSetpoint = -kBackupDistance;
 		
 		// Create a routine that drives back, then moves the slider while moving back forward
 		ArrayList<Routine> sequence = new ArrayList<>();
@@ -127,8 +136,8 @@ public class DriveStraightCenterPegAutoMode extends AutoModeBase {
 		slideSequence.add(new CustomPositioningSliderRoutine(sliderPosition));
 		parallelSliding.add(new SequentialRoutine(slideSequence));
 		sequence.add(new ParallelRoutine(parallelSliding));
-		sequence.add(new DriveStraightRoutine(-driveBackupSetpoint + 3));
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		sequence.add(new DriveStraightRoutine(-driveBackupSetpoint + 3));	// Drive extra to ensure gear is on peg
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		
 		return new SequentialRoutine(sequence);
 	}
@@ -136,9 +145,9 @@ public class DriveStraightCenterPegAutoMode extends AutoModeBase {
 	 * GET NEUTRAL ZONE
 	 */
 	private SequentialRoutine getDriveToNeutralZone(double angle) {
-		double driveBackupSetpoint = -(backupDistance + 12);
-		double driveClearAirshipSetpoint = clearAirshipDistance;
-		double driveToNeutralZoneSetpoint = neutralZoneDistance;
+		double driveBackupSetpoint = -(kBackupDistance + 12);
+		double driveClearAirshipSetpoint = kClearAirshipDistance;
+		double driveToNeutralZoneSetpoint = kNeutralZoneDistance;
 		
 		ArrayList<Routine> sequence = new ArrayList<>();
 		

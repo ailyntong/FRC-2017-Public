@@ -2,7 +2,6 @@ package com.palyrobotics.frc2017.behavior.routines.scoring;
 
 import java.util.Optional;
 
-import com.palyrobotics.frc2017.behavior.ParallelRoutine;
 import com.palyrobotics.frc2017.behavior.Routine;
 import com.palyrobotics.frc2017.config.Commands;
 import com.palyrobotics.frc2017.config.Constants;
@@ -20,24 +19,32 @@ import com.palyrobotics.frc2017.util.Subsystem;
  * @author Prashanti
  */
 public class CustomPositioningSliderRoutine extends Routine {
+	// Spatula needs to be raised before moving slider
 	private enum DistancePositioningState {
 		RAISING,
 		MOVING
 	}
 	private DistancePositioningState mState = DistancePositioningState.RAISING;
+	
 	// Use to make sure routine ran at least once before "finished"
-	private boolean updated = false;
+	private boolean mUpdated = false;
 	
-	private double target;
+	private double mTarget;	// Slider position in inches
 	
-	private double startTime;
-	private static final double raiseTime = 1700;
+	private double mStartTime;	// Milliseconds
+	private static final double kRaiseTime = 1700;	// Milliseconds
 	
-	// Target should be absolute position in inches
+	/**
+	 * Constructor
+	 * @param target Absolute slider position in inches
+	 */
 	public CustomPositioningSliderRoutine(double target) {
-		this.target = target;
+		this.mTarget = target;
 	}
 	
+	/**
+	 * Set initial state and register start time
+	 */
 	@Override
 	public void start() {
 		if (spatula.getState() == SpatulaState.DOWN || slider.getSliderState() == Slider.SliderState.WAITING) {
@@ -47,14 +54,18 @@ public class CustomPositioningSliderRoutine extends Routine {
 		else {
 			mState = DistancePositioningState.MOVING;
 		}
-		startTime = System.currentTimeMillis();
+		mStartTime = System.currentTimeMillis();
 	}
 
+	/**
+	 * Update setpoints
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands update(Commands commands) {
 		commands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.CUSTOM;
-		commands.robotSetpoints.sliderCustomSetpoint = Optional.of(target * Constants.kSliderRevolutionsPerInch);
-		updated = true;
+		commands.robotSetpoints.sliderCustomSetpoint = Optional.of(mTarget * Constants.kSliderRevolutionsPerInch);
+		mUpdated = true;
 		switch(mState) {
 		case MOVING:
 			commands.wantedSliderState = Slider.SliderState.CUSTOM_POSITIONING;
@@ -66,8 +77,8 @@ public class CustomPositioningSliderRoutine extends Routine {
 //				e.printStackTrace();
 			}
 			break;
-			case RAISING:
-			if(System.currentTimeMillis() > (raiseTime+startTime)) {
+		case RAISING:	// Wait for spatula to be fully raised before moving to next state
+			if(System.currentTimeMillis() > (kRaiseTime+mStartTime)) {
 				mState = DistancePositioningState.MOVING;
 				break;
 			}
@@ -78,6 +89,10 @@ public class CustomPositioningSliderRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * Stop slider
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands cancel(Commands commands) {
 		commands.wantedSliderState = Slider.SliderState.IDLE;
@@ -90,6 +105,9 @@ public class CustomPositioningSliderRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * @return Whether the slider is on target or the time limit has passed
+	 */
 	@Override
 	public boolean finished() {
 		RobotState robotState = Robot.getRobotState();
@@ -98,18 +116,24 @@ public class CustomPositioningSliderRoutine extends Routine {
 			return false;
 		}
 		// Give up after 1.5 seconds
-		if (System.currentTimeMillis()-startTime > 1500) {
+		if (System.currentTimeMillis()-mStartTime > 1500) {
 			return true;
 		}
-		return updated && mState==DistancePositioningState.MOVING &&
-				(System.currentTimeMillis() - startTime > 1000) && (robotState.sliderVelocity == 0) && slider.onTarget();
+		return mUpdated && mState==DistancePositioningState.MOVING &&
+				(System.currentTimeMillis() - mStartTime > 1000) && (robotState.sliderVelocity == 0) && slider.onTarget();
 	}
 
+	/**
+	 * @return Set of subsystems required by routine
+	 */
 	@Override
 	public Subsystem[] getRequiredSubsystems() {
 		return new Subsystem[]{Slider.getInstance(), Spatula.getInstance()};
 	}
 
+	/**
+	 * @return Name of routine
+	 */
 	@Override
 	public String getName() {
 		return "SliderDistanceCustomPositioningRoutine";

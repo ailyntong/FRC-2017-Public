@@ -10,20 +10,20 @@ import com.palyrobotics.frc2017.config.Gains;
 import com.palyrobotics.frc2017.config.RobotState;
 import com.palyrobotics.frc2017.config.dashboard.DashboardManager;
 import com.palyrobotics.frc2017.config.dashboard.DashboardValue;
-import com.palyrobotics.frc2017.robot.HardwareAdapter;
-import com.palyrobotics.frc2017.robot.team254.lib.util.CrashTracker;
 import com.palyrobotics.frc2017.util.CANTalonOutput;
 import com.palyrobotics.frc2017.util.Subsystem;
 import com.palyrobotics.frc2017.util.archive.SubsystemLoop;
-import com.palyrobotics.frc2017.util.logger.Logger;
-import com.palyrobotics.frc2017.vision.AndroidConnectionHelper;
 
 /**
+ * Represents the slider.
+ * The slider consists of one CANTalon and a potentiometer.
+ * It can be controlled either manually with joystick movement
+ * or automatically using routines.
  * Created by Nihar on 1/28/17.
- * @author Prashanti
- * Controls the slider subsystem,
+ * @author Prashanti Anderson, Ailyn Tong
  */
 public class Slider extends Subsystem implements SubsystemLoop {
+	// Singleton setup
 	private static Slider instance = new Slider();
 	public static Slider getInstance() {
 		return instance;
@@ -34,6 +34,7 @@ public class Slider extends Subsystem implements SubsystemLoop {
 	
 	//all code assumes that right is 0 and left and center are both positive on both pot and encoder
 	
+	// Determins slider behavior
 	public enum SliderState {
 		IDLE,
 		MANUAL,
@@ -42,6 +43,7 @@ public class Slider extends Subsystem implements SubsystemLoop {
 		CUSTOM_POSITIONING
 	}
 	
+	// Represents the slider's target position
 	public enum SliderTarget {
 		NONE,
 		CUSTOM,
@@ -75,12 +77,16 @@ public class Slider extends Subsystem implements SubsystemLoop {
 	
 	private CANTalonOutput mOutput = new CANTalonOutput();
 	
+	// Dashboard values
 	private DashboardValue sliderPotentiometer;
 	private DashboardValue sliderDist;
 	
+	/**
+	 * Constructor
+	 */
 	private Slider() {
 		super("Slider");
-				
+		// Initialize encoder and potentiometer positions	
 		mEncoderTargetPositions.put(SliderTarget.LEFT, -1.0);
 		mEncoderTargetPositions.put(SliderTarget.CENTER, 0.0);
 		mEncoderTargetPositions.put(SliderTarget.RIGHT, 1.0);
@@ -88,6 +94,7 @@ public class Slider extends Subsystem implements SubsystemLoop {
 		mPotentiometerTargetPositions.put(SliderTarget.CENTER, 0.0);
 		mPotentiometerTargetPositions.put(SliderTarget.RIGHT, 0.0);
 		
+		// Instantiate dashboard values
 		sliderPotentiometer = new DashboardValue("slider-pot");
 		sliderDist = new DashboardValue("sliderDistance");
 	}
@@ -178,6 +185,7 @@ public class Slider extends Subsystem implements SubsystemLoop {
 	}
 	
 	/**
+	 * Sets output based on joystick x-axis input and limited by max voltage
 	 * Encapsulate to use in both run and update methods
 	 */
 	private void setManualOutput(Commands commands) {
@@ -185,6 +193,7 @@ public class Slider extends Subsystem implements SubsystemLoop {
 			mOutput.setVoltage(commands.sliderStickInput.x*Constants.kSliderMaxVoltage);
 			return;
 		}
+		// Limit range
 		if (mRobotState.sliderEncoder < -5 * Constants.kSliderTicksPerInch
 				|| mRobotState.sliderEncoder > 5 * Constants.kSliderTicksPerInch) {
 			mOutput.setVoltage(0);
@@ -248,6 +257,9 @@ public class Slider extends Subsystem implements SubsystemLoop {
 		}
 	}
 	
+	/**
+	 * Updates potentiometer automatic positioning on the slider
+	 */
 	private void setSetpointsPotentiometer() {
 		if (onTargetPotentiometerPositioning()) {
 			mState = SliderState.IDLE;
@@ -261,7 +273,7 @@ public class Slider extends Subsystem implements SubsystemLoop {
 	
 	/**
 	 * Updates the control loop for positioning using the potentiometer
-	 * @return whether the control loop is on target
+	 * @return Whether the control loop is on target
 	 */
 	private void updatePotentiometerAutomaticPositioning() {
 		double potentiometerValue = mRobotState.sliderPotentiometer;
@@ -281,6 +293,9 @@ public class Slider extends Subsystem implements SubsystemLoop {
 		}
 	}
 	
+	/**
+	 * @return Whether the slider has reached its setpoint
+	 */
 	public boolean onTarget() {
 		return (onTargetEncoderPositioning());
 	}

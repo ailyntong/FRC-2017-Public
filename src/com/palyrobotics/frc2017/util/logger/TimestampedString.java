@@ -1,7 +1,5 @@
 package com.palyrobotics.frc2017.util.logger;
 
-import java.sql.Time;
-
 /**
  * Created by Nihar on 3/13/17.
  * Stores a String with the timestamp on construction
@@ -10,21 +8,27 @@ import java.sql.Time;
  * Also automatically adds a newline to the end
  */
 public class TimestampedString implements Comparable<TimestampedString> {
-	private String mString;
-	private long mTime;
+	private String mString;	// Message
+	private long mTime;	// Timestamp in milliseconds
 
+	/**
+	 * Constructor
+	 * @param string Message to add to logger
+	 */
 	public TimestampedString(String string) {
 		mString = string;
 		mTime = System.currentTimeMillis();
 	}
 
+	/**
+	 * @return Time of construction
+	 */
 	public long getTimestamp() {
 		return mTime;
 	}
 
 	/**
-	 * Converts the millisecond timestamp to seconds
-	 * @return
+	 * @return Timestamp in seconds and message
 	 */
 	public String getTimestampedString() {
 		return (mTime/1000)+": "+mString+"\n";
@@ -35,6 +39,9 @@ public class TimestampedString implements Comparable<TimestampedString> {
 		return getTimestampedString();
 	}
 
+	/**
+	 * @return Comparison of timestamps
+	 */
 	@Override
 	public int compareTo(TimestampedString o) {
 		return Long.compare(this.getTimestamp(), o.getTimestamp());

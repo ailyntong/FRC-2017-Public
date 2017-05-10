@@ -6,7 +6,6 @@ import com.palyrobotics.frc2017.config.Commands;
 import com.palyrobotics.frc2017.robot.Robot;
 import com.palyrobotics.frc2017.subsystems.Drive;
 import com.palyrobotics.frc2017.subsystems.controllers.CANTalonDriveController;
-import com.palyrobotics.frc2017.util.CANTalonOutput;
 import com.palyrobotics.frc2017.util.archive.DriveSignal;
 import com.palyrobotics.frc2017.util.Subsystem;
 
@@ -16,36 +15,46 @@ import com.palyrobotics.frc2017.util.Subsystem;
  * Should be used to set the drivetrain to an offboard closed loop cantalon
  */
 public class CANTalonRoutine extends Routine {
-	private boolean relativeSetpoint = false;
-	private final DriveSignal mSignal;
+	private boolean mRelativeSetpoint = false;	// Whether the setpoint is relative or absolute
+	private final DriveSignal mSignal;	// Desired output
 	
-	private double timeout;
-	private double startTime;
+	private double mTimeout;	// Time limit in milliseconds
+	private double mStartTime;	// Start time in milliseconds
 	
+	/**
+	 * Constructor
+	 * @param controller DriveSignal with desired CANTalonOutputs
+	 * @param relativeSetpoint Whether the setpoint is relative or absolute
+	 */
 	public CANTalonRoutine(DriveSignal controller, boolean relativeSetpoint) {
 		this.mSignal = controller;
-		this.timeout = 1 << 30;
-		this.relativeSetpoint = relativeSetpoint;
+		this.mTimeout = 1 << 30;
+		this.mRelativeSetpoint = relativeSetpoint;
 	}
 
 	/*
 	  * Setpoint is relative when you want it to be updated on start
 	  * For position and motion magic only
-	  * 
-	  * Timeout is in seconds
+	  * @param controller DriveSignal with desired CANTalonOutputs
+	  * @param relativeSetpoint Whether the setpoint is relative or absolute
+	  * @param timeout Time limit in seconds
 	  */
 	public CANTalonRoutine(DriveSignal controller, boolean relativeSetpoint, double timeout) {
 		this.mSignal = controller;
-		this.relativeSetpoint = relativeSetpoint;
-		this.timeout = timeout * 1000;
+		this.mRelativeSetpoint = relativeSetpoint;
+		this.mTimeout = timeout * 1000;
 	}
 
+	/**
+	 * Initialize start time and talon setpoints
+	 * Set drive controller
+	 */
 	@Override
 	public void start() {
 		
-		startTime = System.currentTimeMillis();
+		mStartTime = System.currentTimeMillis();
 		
-		if (relativeSetpoint) {
+		if (mRelativeSetpoint) {
 			if (mSignal.leftMotor.getControlMode() == CANTalon.TalonControlMode.MotionMagic) {
 				mSignal.leftMotor.setMotionMagic(mSignal.leftMotor.getSetpoint()+
 								Robot.getRobotState().drivePose.leftEnc,
@@ -69,6 +78,10 @@ public class CANTalonRoutine extends Routine {
 		System.out.println("Sent drivetrain signal "+mSignal.toString());
 	}
 
+	/**
+	 * Update setpoints
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands update(Commands commands) {
 		Commands output = commands.copy();
@@ -76,6 +89,10 @@ public class CANTalonRoutine extends Routine {
 		return output;
 	}
 
+	/**
+	 * Stop drivetrain
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands cancel(Commands commands) {
 		drive.setNeutral();
@@ -83,6 +100,10 @@ public class CANTalonRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * @return True if the controller has finished or the time limit has passsed,
+	 * 		or if there is no drive controller
+	 */
 	@Override
 	public boolean finished() {
 		// Wait for controller to be added before finishing routine
@@ -108,14 +129,20 @@ public class CANTalonRoutine extends Routine {
 		}
 		if (!drive.hasController() || (drive.getController().getClass() == CANTalonDriveController.class && drive.controllerOnTarget())) {
 		}
-		return !drive.hasController() || System.currentTimeMillis() > this.timeout+startTime || (drive.getController().getClass() == CANTalonDriveController.class && drive.controllerOnTarget());
+		return !drive.hasController() || System.currentTimeMillis() > this.mTimeout+mStartTime || (drive.getController().getClass() == CANTalonDriveController.class && drive.controllerOnTarget());
 	}
 
+	/**
+	 * @return Set of subsystems required by routine
+	 */
 	@Override
 	public Subsystem[] getRequiredSubsystems() {
 		return new Subsystem[]{Drive.getInstance()};
 	}
 
+	/**
+	 * @return Name of routine
+	 */
 	@Override
 	public String getName() {
 		return "DriveCANTalonRoutine";

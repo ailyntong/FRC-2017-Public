@@ -14,11 +14,12 @@ import com.palyrobotics.frc2017.util.archive.DriveSignal;
  */
 public class BangBangTurnAngleController implements Drive.DriveController {
 	
-	private double mPower;
-	private double mTargetHeading;
-	private Pose mCachedPose;
+	private double mPower;	// constant output
+	private double mTargetHeading;	// Relative setpoint in degrees
+	private Pose mCachedPose;	// Store previous drive pose
 
 	/**
+	 * Constructor
 	 * @param currentPose Pass in the latest robot state
 	 * @param heading Degrees relative to current state to turn
 	 */
@@ -30,6 +31,9 @@ public class BangBangTurnAngleController implements Drive.DriveController {
 		System.out.println("Target heading: "+this.mTargetHeading);
 	}
 	
+	/**
+	 * Updates output based on relative error to target heading
+	 */
 	@Override
 	public DriveSignal update(RobotState state) {
 		if (this.onTarget()) {
@@ -48,6 +52,9 @@ public class BangBangTurnAngleController implements Drive.DriveController {
 		return output;
 	}
 
+	/**
+	 * @return Setpoint
+	 */
 	@Override
 	public Pose getSetpoint() {
 		mCachedPose.heading = mTargetHeading;
@@ -55,6 +62,9 @@ public class BangBangTurnAngleController implements Drive.DriveController {
 		return mCachedPose;
 	}
 
+	/**
+	 * @return Whether heading is within acceptable tolerance
+	 */
 	@Override
 	public boolean onTarget() {
 		double tolerance = (Constants.kRobotName == Constants.RobotName.DERICA) ? Constants2016.kAcceptableGyroTurnError : Constants.kAcceptableTurnAngleError;

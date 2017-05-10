@@ -12,68 +12,88 @@ import com.palyrobotics.frc2017.util.CANTalonOutput;
 import com.palyrobotics.frc2017.util.Pose;
 import com.palyrobotics.frc2017.util.archive.DriveSignal;
 
+/**
+ * Onboard drive straight control loop using SynchronousPID
+ * @author Robbie Selwyn
+ */
 public class DriveStraightController implements DriveController {
 
-	private Pose cachedPose;
-	private double target;
-	private Gains mGains;
+	private Pose mCachedPose;	// Store previous drive pose
+	private double mTarget;	// Distance in inches
+	private Gains mGains;	// PID gains
 	
-	private SynchronousPID forwardPID;
-	private SynchronousPID headingPID;
+	private SynchronousPID mForwardPID;	// Distance loop
+	private SynchronousPID mHeadingPID;	// Heading loop
 	
-	private final double kTolerance;
+	private final double kTolerance;	// Acceptable distance tolerance in inches
 	
+	/**
+	 * Constructor
+	 * @param priorSetpoint Original drivetrain pose
+	 * @param distance Relative target in inches
+	 */
 	public DriveStraightController(Pose priorSetpoint, double distance) {
-		target = (priorSetpoint.leftEnc + priorSetpoint.rightEnc)/2 + (distance * Constants.kDriveTicksPerInch);
-		System.out.println("Target: "+target);
-		cachedPose = priorSetpoint;
+		mTarget = (priorSetpoint.leftEnc + priorSetpoint.rightEnc)/2 + (distance * Constants.kDriveTicksPerInch);
+		System.out.println("Target: "+mTarget);
+		mCachedPose = priorSetpoint;
 		
+		// Initialize PID
 		mGains = new Gains(.00035, 0.000004, 0.002, 0, 200, 0);
 		kTolerance = (Constants.kRobotName == RobotName.DERICA) ? Constants2016.kAcceptableDriveError : Constants.kAcceptableDrivePositionError;
-		forwardPID = new SynchronousPID(mGains.P, mGains.I, mGains.D, mGains.izone);
-		headingPID = new SynchronousPID(Gains.kSteikDriveStraightTurnkP, 0, 0.005);
-		forwardPID.setOutputRange(-1, 1);
-		headingPID.setOutputRange(-0.2, 0.2);
-		forwardPID.setSetpoint(target);
-		headingPID.setSetpoint(priorSetpoint.heading);
+		mForwardPID = new SynchronousPID(mGains.P, mGains.I, mGains.D, mGains.izone);
+		mHeadingPID = new SynchronousPID(Gains.kSteikDriveStraightTurnkP, 0, 0.005);
+		mForwardPID.setOutputRange(-1, 1);
+		mHeadingPID.setOutputRange(-0.2, 0.2);
+		mForwardPID.setSetpoint(mTarget);
+		mHeadingPID.setSetpoint(priorSetpoint.heading);
 		
 	}
 
+	/**
+	 * @return Whether the robot is within position and velocity tolerance of target
+	 */
 	@Override
 	public boolean onTarget() {
-		if (cachedPose == null) {
+		if (mCachedPose == null) {
 			System.out.println("Cached pose is null");
 			return false;
 		}
 		
 		return Math.abs(Robot.getRobotState().drivePose.heading) < kTolerance &&
-				Math.abs((Robot.getRobotState().drivePose.leftEnc + Robot.getRobotState().drivePose.rightEnc)/2  - target) < kTolerance
+				Math.abs((Robot.getRobotState().drivePose.leftEnc + Robot.getRobotState().drivePose.rightEnc)/2  - mTarget) < kTolerance
 				&& Math.abs(Robot.getRobotState().drivePose.leftSpeed)<0.05
 				&& Math.abs(Robot.getRobotState().drivePose.rightSpeed)<0.05;
 	}
 	
-
+	/**
+	 * Calculates and updates output using SynchronousPID
+	 * @return New drivetrain output
+	 */
 	@Override
 	public DriveSignal update(RobotState state) {
 		CANTalonOutput leftOutput = new CANTalonOutput();
 		CANTalonOutput rightOutput = new CANTalonOutput();
-		cachedPose = state.drivePose;
+		mCachedPose = state.drivePose;
+		// Take average of left and right distances
 		double distanceSoFar = state.drivePose.leftEnc+state.drivePose.rightEnc;
 		distanceSoFar /= 2;
-		double throttle = forwardPID.calculate(distanceSoFar);
+		double throttle = mForwardPID.calculate(distanceSoFar);
 //		double turn = headingPID.calculate(state.drivePose.heading) * Constants.kDriveInchesPerDegree;
 		double turn = 0;
 		leftOutput.setPercentVBus(throttle + turn);
 		rightOutput.setPercentVBus(throttle - turn);
 		
-		System.out.println(forwardPID.getError());
+		System.out.println(mForwardPID.getError());
 
 		return new DriveSignal(leftOutput, rightOutput);
 	}
 
+	/**
+	 * @return Setpoint
+	 */
 	@Override
 	public Pose getSetpoint() {
-		return new Pose(target, 0, 0, target, 0, 0, 0, 0, 0, 0);
+		return new Pose(mTarget, 0, 0, mTarget, 0, 0, 0, 0, 0, 0);
 	}
 
 }

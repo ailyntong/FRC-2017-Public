@@ -4,7 +4,6 @@ import com.ctre.CANTalon;
 import com.kauailabs.navx.frc.AHRS;
 import com.palyrobotics.frc2017.config.Constants;
 import com.palyrobotics.frc2017.config.Constants2016;
-import com.palyrobotics.frc2017.robot.team254.lib.util.ADXRS453_Gyro;
 
 import edu.wpi.first.wpilibj.*;
 /**
@@ -37,7 +36,7 @@ public class HardwareAdapter {
 //		public final Encoder leftEncoder;
 //		public final Encoder rightEncoder;
 //		public final ADXRS453_Gyro gyro;
-		public AHRS gyro;
+		public AHRS gyro;	// NavX MXP
 
 		public static void resetSensors() {
 			instance.gyro.zeroYaw();

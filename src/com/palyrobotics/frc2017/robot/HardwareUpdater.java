@@ -4,24 +4,18 @@ import com.ctre.CANTalon;
 import com.ctre.CANTalon.TalonControlMode;
 import com.kauailabs.navx.frc.AHRS;
 import com.palyrobotics.frc2017.config.Constants;
-import com.palyrobotics.frc2017.config.Constants2016;
 import com.palyrobotics.frc2017.config.RobotState;
-import com.palyrobotics.frc2017.robot.team254.lib.util.ADXRS453_Gyro;
 import com.palyrobotics.frc2017.robot.team254.lib.util.Loop;
 import com.palyrobotics.frc2017.config.Constants.RobotName;
-import com.palyrobotics.frc2017.config.dashboard.DashboardManager;
 import com.palyrobotics.frc2017.subsystems.*;
 import com.palyrobotics.frc2017.util.CANTalonOutput;
 import com.palyrobotics.frc2017.util.logger.Logger;
-
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.GyroBase;
-import edu.wpi.first.wpilibj.interfaces.Gyro;
 
 import java.util.Optional;
 
 /**
  * Should only be used in robot package.
+ * @author Nihar Mitra
  */
 class HardwareUpdater {
 	public HardwareSensorLoop getHardwareSensorLoop() {
@@ -31,6 +25,10 @@ class HardwareUpdater {
 		return new HardwareEnabledLoop();
 	}
 	
+	/**
+	 * Updates sensors on an individual loop
+	 * @author Nihar Mitra
+	 */
 	public class HardwareSensorLoop implements Loop {
 		@Override
 		public void update() {
@@ -46,6 +44,10 @@ class HardwareUpdater {
 		}
 	}
 	
+	/**
+	 * Updates subsystem hardware on an individual loop
+	 * @author Nihar Mitra
+	 */
 	public class HardwareEnabledLoop implements Loop {
 		public HardwareEnabledLoop() {
 			
@@ -110,6 +112,7 @@ class HardwareUpdater {
 		Logger.getInstance().logRobotThread("Init hardware");
 		configureTalons(true);
 		AHRS gyro = HardwareAdapter.getInstance().getDrivetrain().gyro;
+		// Attempt to connect to gyro
 		if (gyro != null) {
 			int i = 0;
 			while (!gyro.isConnected()) {
@@ -123,6 +126,9 @@ class HardwareUpdater {
 		gyro.zeroYaw();
 	}
 	
+	/**
+	 * Disables all talons on the robot
+	 */
 	void disableTalons() {
 		Logger.getInstance().logRobotThread("Disabling talons");
 		HardwareAdapter.getInstance().getDrivetrain().leftMasterTalon.disable();
@@ -137,6 +143,10 @@ class HardwareUpdater {
 		}
 	}
 	
+	/**
+	 * Configures talon settings
+	 * @param calibrateSliderEncoder Whether to calibrate slider using potentiometer
+	 */
 	void configureTalons(boolean calibrateSliderEncoder) {
 		configureDriveTalons();
 		if (Constants.kRobotName == RobotName.STEIK) {
@@ -176,6 +186,9 @@ class HardwareUpdater {
 		}
 	}
 	
+	/**
+	 * Configures drivetrain talon settings
+	 */
 	void configureDriveTalons() {
 		CANTalon leftMasterTalon = HardwareAdapter.getInstance().getDrivetrain().leftMasterTalon;
 		CANTalon leftSlave1Talon = HardwareAdapter.getInstance().getDrivetrain().leftSlave1Talon;
@@ -265,10 +278,12 @@ class HardwareUpdater {
 	 * Updates all the sensor data taken from the hardware
 	 */
 	void updateSensors(RobotState robotState) {
+		// Control modes and setpoints
 		robotState.leftControlMode = HardwareAdapter.DrivetrainHardware.getInstance().leftMasterTalon.getControlMode();
 		robotState.rightControlMode = HardwareAdapter.DrivetrainHardware.getInstance().rightMasterTalon.getControlMode();
 		robotState.leftSetpoint = HardwareAdapter.DrivetrainHardware.getInstance().leftMasterTalon.getSetpoint();
 		robotState.rightSetpoint = HardwareAdapter.DrivetrainHardware.getInstance().rightMasterTalon.getSetpoint();
+		// Gyro
 		AHRS gyro = HardwareAdapter.DrivetrainHardware.getInstance().gyro;
 		if (gyro != null) {
 			robotState.drivePose.heading = HardwareAdapter.DrivetrainHardware.getInstance().gyro.getAngle();
@@ -282,6 +297,7 @@ class HardwareUpdater {
 			robotState.drivePose.heading = -0;
 			robotState.drivePose.headingVelocity = -0;
 		}
+		// Drivetrain talons
 		CANTalon leftMasterTalon = HardwareAdapter.DrivetrainHardware.getInstance().leftMasterTalon;
 		CANTalon rightMasterTalon = HardwareAdapter.DrivetrainHardware.getInstance().rightMasterTalon;
 		robotState.drivePose.leftEnc = leftMasterTalon.getPosition();
@@ -302,6 +318,8 @@ class HardwareUpdater {
 		} else {
 			robotState.drivePose.rightError = Optional.empty();
 		}
+		
+		// Slider
 		if (Constants.kRobotName == Constants.RobotName.STEIK) {
 			CANTalon sliderTalon = HardwareAdapter.SliderHardware.getInstance().sliderTalon;
 			robotState.sliderEncoder = sliderTalon.getEncPosition();
@@ -320,9 +338,13 @@ class HardwareUpdater {
 				robotState.sliderClosedLoopError = Optional.empty();
 			}
 		}
+		
+		// Climber
 		if (HardwareAdapter.getInstance().getClimber().climberTalon != null) {
 			robotState.climberEncoder = HardwareAdapter.ClimberHardware.getInstance().climberTalon.getPosition();
 		}
+		
+		// More slider
 		if (HardwareAdapter.getInstance().getSlider().sliderTalon != null) {
 			robotState.sliderPosition = HardwareAdapter.SliderHardware.getInstance().sliderTalon.getPosition();
 		}
@@ -339,18 +361,18 @@ class HardwareUpdater {
 		updateDrivetrain();
 	}
 
+	/**
+	 * Sets the output from Steik subsystems for the respective hardware
+	 */
 	private void updateSteikSubsystems() {
-//		// FLIPPERS
+		// FLIPPERS
 //		HardwareAdapter.getInstance().getFlippers().leftSolenoid.set(mFlippers.getFlipperSignal().leftFlipper);
 //		HardwareAdapter.getInstance().getFlippers().rightSolenoid.set(mFlippers.getFlipperSignal().rightFlipper);
-//		// SLIDER
-//		System.out.println(mSlider.getOutput().toString());
-//		System.out.println("Talon setpt:"+HardwareAdapter.getInstance().getSlider().sliderTalon.getSetpoint());
-//		System.out.println("Talon setpt:"+HardwareAdapter.getInstance().getSlider().sliderTalon.getControlMode());
+		// SLIDER
 		updateCANTalonSRX(HardwareAdapter.getInstance().getSlider().sliderTalon, mSlider.getOutput());
 		// SPATULA
 		HardwareAdapter.getInstance().getSpatula().spatulaSolenoid.set(mSpatula.getOutput());
-//		// INTAKE
+		// INTAKE
 		HardwareAdapter.getInstance().getIntake().intakeMotor.set(mIntake.getOutput());
 		// CLIMBER
 		updateCANTalonSRX(HardwareAdapter.getInstance().getClimber().climberTalon, mClimber.getOutput());
@@ -367,6 +389,8 @@ class HardwareUpdater {
 
 	/**
 	 * Helper method for processing a CANTalonOutput for an SRX
+	 * @param talon Target SRX
+	 * @param output Desired talon state including control mode, PID, setpoint
 	 */
 	private void updateCANTalonSRX(CANTalon talon, CANTalonOutput output) {
 		talon.changeControlMode(output.getControlMode());

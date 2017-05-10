@@ -5,18 +5,18 @@ import com.palyrobotics.frc2017.config.Gains;
 import com.palyrobotics.frc2017.config.RobotState;
 import com.palyrobotics.frc2017.config.dashboard.DashboardManager;
 import com.palyrobotics.frc2017.config.dashboard.DashboardValue;
-import com.palyrobotics.frc2017.robot.HardwareAdapter;
 import com.palyrobotics.frc2017.util.CANTalonOutput;
 import com.palyrobotics.frc2017.util.Subsystem;
 import com.palyrobotics.frc2017.util.archive.SubsystemLoop;
 
 /**
- * Subsystem that represents the climber
+ * Represents the climber
  * A single winch motor with an encoder
  * Uses current draw to detect when starting and stopping climb
  * @author Ailyn Tong, Robbie Selwyn
  */
 public class Climber extends Subsystem implements SubsystemLoop {
+	// Singleton setup
 	private static Climber instance = new Climber();
 	public static Climber getInstance() {
 		return instance;
@@ -24,11 +24,10 @@ public class Climber extends Subsystem implements SubsystemLoop {
 
 	private CANTalonOutput mOutput = new CANTalonOutput();
 
-	// TODO Find constants
-
 	private int mPrevEnc;
 	private final Gains mGains = new Gains(0.1, 0, 0.01, 0, 0, 0);
 
+	// Unused
 	public static final int kMinimumDeltaEnc = 1;	// Minimum amount encoder should be shifting
 	public static final int kEncoderTicksToTop = 100;
 	public static final float kClimbingTriggerCurrent = 70;
@@ -43,18 +42,21 @@ public class Climber extends Subsystem implements SubsystemLoop {
 	private DashboardValue state;
 	private DashboardValue encoder;
 	
+	// Determines climber behavior
 	public enum ClimberState {
 		IDLE,
 		MANUAL,
 		WAITING_FOR_ROPE,
 		CLIMBING_ENCODER_DISTANCE
 	}
-
 	private ClimberState mState;
 
+	/**
+	 * Constructor
+	 */
 	private Climber() {
 		super("Climber");
-		
+		// Instantiate dashboard values
 		current = new DashboardValue("climbercurrent");
 		encoder = new DashboardValue("climberencoder");
 		state = new DashboardValue("climberstate");
@@ -146,10 +148,16 @@ public class Climber extends Subsystem implements SubsystemLoop {
 		DashboardManager.getInstance().publishKVPair(state);
 	}
 
+	/**
+	 * @return The current climber output
+	 */
 	public CANTalonOutput getOutput() {
 		return mOutput;
 	}
 
+	/**
+	 * @return The current climber state
+	 */
 	public ClimberState getState() {
 		return mState;
 	}

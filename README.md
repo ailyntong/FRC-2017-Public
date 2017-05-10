@@ -1,12 +1,12 @@
 Team 8 Paly Robotics - FRC 2017 Robot Software
 ================================================
-## Robot description 
+## Robot description
 Robot code for Team 8's 2017 Steamworks FRC robot
 
 ### Robot subsystems
 #### Spatula
-The mechanism for accumulating gears from the ground, 
-and for scoring gears by passively placing them on the 
+The mechanism for accumulating gears from the ground,
+and for scoring gears by passively placing them on the
 lift.
 #### Slider
 Rail mechanism to move the spatula horizontally in order to
@@ -17,7 +17,7 @@ Roller tube to roll gears into the spatula.
 #### Climber
 Winch mechanism to grab the rope and climb
 #### Drivetrain
-A 8 wheel 4-CIM west coast drivetrain
+An 8 wheel 6-CIM west coast drivetrain
 ## Acknowledgements
 Reuses code from Team 8 2016 offseason robot software (Lady Derica repository)[https://github.com/team8/lady-derica] <br />
 Built off of Team 254's 2014/2015 FRC robot code. <br />

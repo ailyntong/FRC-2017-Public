@@ -18,6 +18,9 @@ public class PositioningSliderRoutine extends Routine {
 	// Whether this routine is allowed to run or not
 	private boolean mAllowed;
 	
+	/**
+	 * Determine if routine is allowed to run
+	 */
 	@Override
 	public void start() {
 		if (spatula.getState() == SpatulaState.DOWN) {
@@ -27,6 +30,10 @@ public class PositioningSliderRoutine extends Routine {
 		}
 	}
 
+	/**
+	 * Update setpoints
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands update(Commands commands) {
 		if (mAllowed) {
@@ -44,6 +51,10 @@ public class PositioningSliderRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * Stop slider
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands cancel(Commands commands) {
 		commands.wantedSliderState = Slider.SliderState.IDLE;
@@ -55,19 +66,28 @@ public class PositioningSliderRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * @return Whether slider is on target or routine is not allowed
+	 */
 	@Override
 	public boolean finished() {
 		return !mAllowed || slider.onTarget();
 	}
 
+	/**
+	 * @return Set of subsystems required by routine
+	 */
 	@Override
 	public Subsystem[] getRequiredSubsystems() {
 		return new Subsystem[]{Slider.getInstance(), Spatula.getInstance()};
 	}
 
+	/**
+	 * @return Name of routine
+	 */
 	@Override
 	public String getName() {
-		return "Slider Distance Positioning Routine";
+		return "SliderDistancePositioningRoutine";
 	}
 
 }

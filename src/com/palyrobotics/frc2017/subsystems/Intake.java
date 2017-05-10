@@ -7,20 +7,26 @@ import com.palyrobotics.frc2017.util.Subsystem;
 import com.palyrobotics.frc2017.util.archive.SubsystemLoop;
 
 /**
- * STEIK INTAKE
+ * Represents the intake
+ * Single motor that spins at set speeds
  * @author Ailyn Tong
  *
  */
 public class Intake extends Subsystem implements SubsystemLoop {
+	// Singleton setup
 	private static Intake instance = new Intake();
 	public static Intake getInstance() {
 		return instance;
 	}
 	
+	// Determines intake behavior
 	public enum IntakeState { IDLE, INTAKE, EXPEL }
 	
 	private double mOutput;
 	
+	/**
+	 * Constructor
+	 */
 	private Intake() {
 		super("Intake");
 	}
@@ -36,6 +42,7 @@ public class Intake extends Subsystem implements SubsystemLoop {
 	@Override
 	public void update(Commands commands, RobotState robotState) {
 		switch (commands.wantedIntakeState) {
+		// Sets output to a constant speed
 		case IDLE:
 			mOutput = 0;
 			break;
@@ -48,6 +55,9 @@ public class Intake extends Subsystem implements SubsystemLoop {
 		}
 	}
 
+	/**
+	 * @return The current intake output
+	 */
 	public double getOutput() {
 		return mOutput;
 	}

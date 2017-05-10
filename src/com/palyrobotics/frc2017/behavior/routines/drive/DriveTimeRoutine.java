@@ -9,9 +9,13 @@ import com.palyrobotics.frc2017.util.Subsystem;
 
 import java.util.Optional;
 
+/**
+ * Drive at a specified output for a specified length of time
+ * @author Nihar Mitra
+ */
 public class DriveTimeRoutine extends Routine {
-	private long mEndTime;
-	private DriveSignal mDrivePower;
+	private long mEndTime;	// End time in milliseconds
+	private DriveSignal mDrivePower;	// PercentVbus output (-1 to 1)
 
 	/**
 	 * Constructs with a specified time setpoint and velocity
@@ -24,6 +28,9 @@ public class DriveTimeRoutine extends Routine {
 		this.mDrivePower = drivePower;
 	}
 
+	/**
+	 * Initialize end time, reset controller
+	 */
 	@Override
 	public void start() {
 		drive.resetController();
@@ -32,6 +39,10 @@ public class DriveTimeRoutine extends Routine {
 	}
 
 	//Routines just change the states of the robotsetpoints, which the behavior manager then moves the physical subsystems based on.
+	/**
+	 * Update setpoint
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands update(Commands commands) {
 		commands.wantedDriveState = Drive.DriveState.OPEN_LOOP;
@@ -39,6 +50,10 @@ public class DriveTimeRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * Stop drivetrain
+	 * @return Modified commands
+	 */
 	@Override
 	public Commands cancel(Commands commands) {
 		System.out.println("Cancelling");
@@ -48,17 +63,25 @@ public class DriveTimeRoutine extends Routine {
 		return commands;
 	}
 
+	/**
+	 * @return True after the time is up
+	 */
 	@Override
 	public boolean finished() {
-		// Finish after the time is up
 		return (System.currentTimeMillis() >= mEndTime);
 	}
 
+	/**
+	 * @return Name of routine
+	 */
 	@Override
 	public String getName() {
 		return "DriveTimeRoutine";
 	}
 
+	/**
+	 * @return Set of subsystems required by routine
+	 */
 	@Override
 	public Subsystem[] getRequiredSubsystems() {
 		return new Subsystem[]{drive};

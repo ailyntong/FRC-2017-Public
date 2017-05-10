@@ -20,9 +20,9 @@ import java.util.*;
  */
 public class RoutineManager implements Tappable {
 	// Routines that are being run
-	private ArrayList<Routine> runningRoutines = new ArrayList<>();
-	private ArrayList<Routine> routinesToRemove = new ArrayList<>();
-	private ArrayList<Routine> routinesToAdd = new ArrayList<>();
+	private ArrayList<Routine> mRunningRoutines = new ArrayList<>();
+	private ArrayList<Routine> mRoutinesToRemove = new ArrayList<>();
+	private ArrayList<Routine> mRoutinesToAdd = new ArrayList<>();
 
 	/**
 	 * Stores the new routine to be added in next update cycle <br />
@@ -34,11 +34,14 @@ public class RoutineManager implements Tappable {
 			System.err.println("Tried to add null routine to routine manager!");
 			throw new NullPointerException();
 		}
-		routinesToAdd.add(newRoutine);
+		mRoutinesToAdd.add(newRoutine);
 	}
 
+	/**
+	 * @return Routines being run
+	 */
 	public ArrayList<Routine> getCurrentRoutines() {
-		return runningRoutines;
+		return mRunningRoutines;
 	}
 
 	/** Wipes all current routines <br />
@@ -50,16 +53,16 @@ public class RoutineManager implements Tappable {
 		Logger.getInstance().logRobotThread("Routine manager reset");
 		Commands output = commands.copy();
 		// Cancel all running routines
-		if(runningRoutines.size() != 0) {
-			for(Routine routine : runningRoutines) {
+		if(mRunningRoutines.size() != 0) {
+			for(Routine routine : mRunningRoutines) {
 				System.out.println("Canceling "+routine.getName());
 				output = routine.cancel(output);
 			}
 		}
 		// Empty the routine buffers
-		runningRoutines.clear();
-		routinesToAdd.clear();
-		routinesToRemove.clear();
+		mRunningRoutines.clear();
+		mRoutinesToAdd.clear();
+		mRoutinesToRemove.clear();
 		return output;
 	}
 
@@ -69,43 +72,43 @@ public class RoutineManager implements Tappable {
 	 * @return Modified commands
 	 */
 	public Commands update(Commands commands) {
-		routinesToRemove = new ArrayList<>();
+		mRoutinesToRemove = new ArrayList<>();
 		Commands output = commands.copy();
 		// Update all running routines
-		for(Routine routine : runningRoutines) {
+		for(Routine routine : mRunningRoutines) {
 			if(routine.finished()) {
 				Logger.getInstance().logRobotThread("Routine "+routine.getName()+" finished, canceled");
 //				System.out.println("Routine cancel called");
 				output = routine.cancel(output);
-				routinesToRemove.add(routine);
+				mRoutinesToRemove.add(routine);
 			} else {
 				output = routine.update(output);
 			}
 		}
 		
 		// Remove routines that finished
-		for(Routine routine : routinesToRemove) {
+		for(Routine routine : mRoutinesToRemove) {
 //			System.out.println("Completed routine: " + routine.getName());
-			runningRoutines.remove(routine);
+			mRunningRoutines.remove(routine);
 		}
 
 		// Add newest routines after current routines may have finished, start them, and update them
-		for (Routine newRoutine : routinesToAdd) {
+		for (Routine newRoutine : mRoutinesToAdd) {
 			// combine running routines w/ new routine to check for shared subsystems
-			ArrayList<Routine> conflicts = conflictingRoutines(runningRoutines, newRoutine);
+			ArrayList<Routine> conflicts = conflictingRoutines(mRunningRoutines, newRoutine);
 			for(Routine routine : conflicts) {
 				Logger.getInstance().logRobotThread("Canceling routine "+routine.getName() +
 						" that conflicts with "+newRoutine.getName());
 				output = routine.cancel(output);
 //				System.out.println("Canceling routine " + routine.getName());
-				runningRoutines.remove(routine);
+				mRunningRoutines.remove(routine);
 			}
 			newRoutine.start();
 			output = newRoutine.update(output);
-			runningRoutines.add(newRoutine);
+			mRunningRoutines.add(newRoutine);
 		}
 		
-		routinesToAdd.clear();
+		mRoutinesToAdd.clear();
 
 		if (output.cancelCurrentRoutines) {
 			System.out.println("Cancel routine button");
@@ -162,6 +165,10 @@ public class RoutineManager implements Tappable {
 		return "RoutineManager";
 	}
 	
+	/**
+	 * @param routines Routines to compare
+	 * @return Set of all subsystems required by routines
+	 */
 	public static Subsystem[] subsystemSuperset(ArrayList<Routine> routines) {
 		HashSet<Subsystem> superset = new HashSet<Subsystem>();
 		for (Routine routine : routines) {
@@ -173,6 +180,8 @@ public class RoutineManager implements Tappable {
 	/**
 	 * Finds overlapping subsystems
 	 * Not optimized
+	 * @param routines Routines to compare
+	 * @return Array of subsystems shared by routines
 	 */
 	public static Subsystem[] sharedSubsystems(ArrayList<Routine> routines) {
 		HashMap<Subsystem, Integer> counter = new HashMap<Subsystem, Integer>();

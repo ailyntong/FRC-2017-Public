@@ -17,20 +17,28 @@ import java.util.ArrayList;
 
 /**
  * Created by Nihar on 2/11/17.
+ * Motion magic center peg autonomous
+ * Includes backup attempt with custom slider positioning
  */
 public class CenterPegAutoMode extends AutoModeBase {
 	public enum Alliance {
 		BLUE, RED
 	}
+	// Store configuration on construction
 	private final Alliance mAlliance;
 	private SequentialRoutine mSequentialRoutine;
 	private boolean mBackup = true;
 	
 	private Gains mShortGains, mLongGains;
-	private double initialSliderPosition;	// distance from center in inches
-	private final double backupDistance = 10;	// distance in inches
-	private final double pilotWaitTime = 2;	// time in seconds
+	private double mInitialSliderPosition;	// distance from center in inches
+	private final double kBackupDistance = 10;	// distance in inches
+	private final double kPilotWaitTime = 2;	// time in seconds
 
+	/**
+	 * Constructor
+	 * @param alliance Red or blue side
+	 * @param backup Whether to conduct a second scoring attempt
+	 */
 	public CenterPegAutoMode(Alliance alliance, boolean backup) {
 		mAlliance = alliance;
 		mShortGains = Gains.steikShortDriveMotionMagicGains;
@@ -62,18 +70,19 @@ public class CenterPegAutoMode extends AutoModeBase {
 		driveForward.rightMotor.setMotionMagic(driveForwardSetpoint, mLongGains,
 				Gains.kSteikLongDriveMotionMagicCruiseVelocity, Gains.kSteikLongDriveMotionMagicMaxAcceleration);
 		
-		initialSliderPosition = (mAlliance == Alliance.BLUE) ? -2.5 : 0;
+		mInitialSliderPosition = (mAlliance == Alliance.BLUE) ? -2.5 : 0;
 		// Drive forward while moving slider to initial position
 		ArrayList<Routine> initialSlide = new ArrayList<>();
-		initialSlide.add(new CustomPositioningSliderRoutine(initialSliderPosition));
+		initialSlide.add(new CustomPositioningSliderRoutine(mInitialSliderPosition));
 		initialSlide.add(new CANTalonRoutine(driveForward, true));
 		sequence.add(new ParallelRoutine(initialSlide));
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		
+		// Backup, drive forward while repositioning, and wait for pilot
 		if (mBackup) {
 			double backup = (mAlliance == Alliance.BLUE) ? 0 : 5;
-			sequence.add(getBackup(backup));		// Move slider slightly to the left
-			sequence.add(new TimeoutRoutine(pilotWaitTime));
+			sequence.add(getBackup(backup));
+			sequence.add(new TimeoutRoutine(kPilotWaitTime)); 
 		}
 
 		mSequentialRoutine = new SequentialRoutine(sequence);
@@ -91,7 +100,7 @@ public class CenterPegAutoMode extends AutoModeBase {
 		DriveSignal driveBackup = DriveSignal.getNeutralSignal();
 		DriveSignal driveReturn = DriveSignal.getNeutralSignal();
 
-		double driveBackupSetpoint = -backupDistance * Constants.kDriveTicksPerInch;
+		double driveBackupSetpoint = -kBackupDistance * Constants.kDriveTicksPerInch;
 		driveBackup.leftMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
 				Gains.kSteikShortDriveMotionMagicCruiseVelocity, Gains.kSteikShortDriveMotionMagicMaxAcceleration);
 		driveBackup.rightMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
@@ -113,7 +122,7 @@ public class CenterPegAutoMode extends AutoModeBase {
 		parallelSliding.add(new SequentialRoutine(slideSequence));
 		sequence.add(new ParallelRoutine(parallelSliding));
 		sequence.add(new CANTalonRoutine(driveReturn, true));
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		
 		return new SequentialRoutine(sequence);
 	}

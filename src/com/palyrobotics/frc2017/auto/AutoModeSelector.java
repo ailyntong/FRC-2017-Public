@@ -1,7 +1,6 @@
 package com.palyrobotics.frc2017.auto;
 
 import com.palyrobotics.frc2017.auto.modes.*;
-import com.palyrobotics.frc2017.auto.modes.archive.DriveStraightCenterPegAutoMode.CenterAutoPostVariant;
 import com.palyrobotics.frc2017.auto.modes.archive.*;
 import com.palyrobotics.frc2017.auto.modes.archive.CenterPegAutoMode.Alliance;
 import com.palyrobotics.frc2017.auto.modes.SidePegAutoMode.SideAutoPostVariant;
@@ -13,11 +12,23 @@ import org.json.simple.JSONArray;
 import java.util.ArrayList;
 
 /**
+ * The AutoModeSelector contains an ArrayList of auto modes that is created on construction.
+ * For clarity, an enum is used to map auto mode names to their corresponding index in the ArrayList.
  * @author Nihar, based off Team 254 2015
  */
 public class AutoModeSelector {
+	// Singleton setup
 	private static AutoModeSelector instance = null;
+	public static AutoModeSelector getInstance() {
+		if (instance == null) {
+			instance = new AutoModeSelector();
+		}
+		return instance;
+	}
+	
 	private ArrayList<AutoModeBase> mAutoModes = new ArrayList<>();
+	
+	// Maps name to index
 	private enum AutoIndices {
 		DO_NOTHING(0), BASELINE(1),
 		CENTER_PEG(2), SIDE_PEG(3), 
@@ -35,13 +46,6 @@ public class AutoModeSelector {
 
 	int selectedIndex = 10;//AutoIndices.TRAJECTORY_CENTER.get();
 
-	public static AutoModeSelector getInstance() {
-		if (instance == null) {
-			instance = new AutoModeSelector();
-		}
-		return instance;
-	}
-
 	/**
 	 * Add an AutoMode to list to choose from
 	 * @param auto AutoMode to add
@@ -50,6 +54,10 @@ public class AutoModeSelector {
 		mAutoModes.add(auto);
 	}
 
+	/**
+	 * Constructor
+	 * @see AutoModeSelector#registerAutonomous(AutoModeBase)
+	 */
 	private AutoModeSelector() {
   /*0*/ registerAutonomous(new DoNothingAutoMode());
 		
@@ -65,9 +73,9 @@ public class AutoModeSelector {
 						true)); // seeking right vision target?, backup?
 
   /*6*/ registerAutonomous(new TrajectoryCenterPegAutoMode(Alliance.BLUE, true));
-  /*7*/registerAutonomous(new TrajectorySidePegAutoMode(SideAutoVariant.RED_LOADING, TrajectorySidePostVariant.BACKUP));
-  /*8*/registerAutonomous(new TestAutoMode());
-  /*9*/registerAutonomous(new TestTrajectoryAutoMode());
+  /*7*/ registerAutonomous(new TrajectorySidePegAutoMode(SideAutoVariant.RED_LOADING, TrajectorySidePostVariant.BACKUP));
+  /*8*/ registerAutonomous(new TestAutoMode());
+  /*9*/ registerAutonomous(new TestTrajectoryAutoMode());
   /*10*/registerAutonomous(new DemoAutoMode());
 	}
 
@@ -103,6 +111,11 @@ public class AutoModeSelector {
 		return list;
 	}
 
+	/**
+	 * Gets the names of all registered AutoModes
+	 * @return JSONArray of Automodes string name
+	 * @see AutoModeSelector#getAutoModeList()
+	 */
 	public JSONArray getAutoModeJSONList() {
 		JSONArray list = new JSONArray();
 		list.addAll(getAutoModeList());
@@ -110,7 +123,8 @@ public class AutoModeSelector {
 	}
 
 	/**
-	 * Attempt to set
+	 * Attempt to set the index given the name
+	 * @param name Name of the auto mode
 	 * @return false if unable to find appropriate AutoMode
 	 * @see AutoModeBase#toString()
 	 */
@@ -147,7 +161,12 @@ public class AutoModeSelector {
 		return true;
 	}
 
+	/**
+	 * Attempt to set the auto mode given the index
+	 * @param which Index of auto mdoe
+	 */
 	private void setAutoModeByIndex(int which) {
+		// Defaults to DoNothingAutoMode if index is inappropriate
 		if (which < 0 || which >= mAutoModes.size()) {
 			which = 0;
 		}

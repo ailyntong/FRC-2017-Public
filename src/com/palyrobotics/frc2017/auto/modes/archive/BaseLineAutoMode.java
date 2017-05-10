@@ -9,13 +9,22 @@ import com.palyrobotics.frc2017.config.Constants2016;
 import com.palyrobotics.frc2017.config.Gains;
 import com.palyrobotics.frc2017.util.archive.DriveSignal;
 
+/**
+ * Motion magic baseline autonomous
+ * @author Nihar Mitra
+ */
 public class BaseLineAutoMode extends AutoModeBase {
 	private CANTalonRoutine mRoutine;
-	private final CenterPegAutoMode.Alliance mAlliance;
-	private Gains mGains;
+	private final CenterPegAutoMode.Alliance mAlliance;	// Red vs blue
+	private Gains mGains;	// Motion magic gains
 
+	/**
+	 * Constructor
+	 * @param alliance Red or blue side
+	 */
 	public BaseLineAutoMode(CenterPegAutoMode.Alliance alliance) {
 		mAlliance = alliance;
+		// Initialize gains for appropriate robot
 		if(Constants.kRobotName == Constants.RobotName.DERICA) {
 			mGains = Gains.dericaPosition;
 		} else {

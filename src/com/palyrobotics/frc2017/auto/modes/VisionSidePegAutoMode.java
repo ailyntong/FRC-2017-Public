@@ -28,53 +28,66 @@ import java.util.ArrayList;
 public class VisionSidePegAutoMode extends AutoModeBase {
 
 	// Store configuration on construction
-	private final SidePegAutoMode.SideAutoVariant mVariant;
-	private final boolean mBackup;
+	private final SidePegAutoMode.SideAutoVariant mVariant;	// ALliance color and side
+	private final boolean mBackup;	// Whether to conduct additional scoring attempts
 	
 	private Routine mSequentialRoutine;
 
 	// Long distance vs short distance
 	private Gains mLongGains, mShortGains;
 
-	private final double pilotWaitTime = 1.5; // time in seconds
-	private final double backupDistance = 12; // distance in inches
-	private double overshootDistance = 0;
-	private double bonusDistance = 20; // extra space
+	private final double kPilotWaitTime = 1.5; // time in seconds
+	private final double kBackupDistance = 12; // distance in inches
+	private double kOvershootDistance = 0;
+	private double kBonusDistance = 20; // extra space
 
-	private double[] sliderPositions = new double[2];
+	// Slider positions for each scoring attempt
+	private double[] mSliderPositions = new double[2];
 
-	public VisionSidePegAutoMode(SidePegAutoMode.SideAutoVariant direction,
-								 boolean backup) {
+	/**
+	 * Constructor
+	 * @param direction Alliance color and side
+	 * @param backup Whether to conduct additional scoring attempts
+	 */
+	public VisionSidePegAutoMode(SidePegAutoMode.SideAutoVariant direction, boolean backup) {
 		mVariant = direction;
 		mBackup = backup;
+		// Initialize gains
 		mLongGains = Gains.steikLongDriveMotionMagicGains;
 		mShortGains = Gains.steikShortDriveMotionMagicGains;
-		sliderPositions = new double[2];
-		sliderPositions[0] = -7;
+		// Initialize slider positions
+		mSliderPositions = new double[2];
+		mSliderPositions[0] = -7;
 		switch (mVariant) {
 			// loading station
 			case RED_LOADING:
-				sliderPositions[1] = 2;
+				mSliderPositions[1] = 2;
 				break;
 			case BLUE_LOADING:
-				sliderPositions[1] = 2;
+				mSliderPositions[1] = 2;
 				break;
 			// boiler side
 			case RED_BOILER:
-				sliderPositions[1] = 0;
+				mSliderPositions[1] = 0;
 				break;
 			case BLUE_BOILER:
-				sliderPositions[1] = 1;
+				mSliderPositions[1] = 1;
 				break;
 		}
 
 	}
 
+	/**
+	 * @return The SequentialRoutine constructed in prestart()
+	 */
 	@Override
 	public Routine getRoutine() {
 		return mSequentialRoutine;
 	}
 
+	/**
+	 * Creates a SequentialRoutine that represents a series of autonomous actions
+	 */
 	@Override
 	public void prestart() {
 		if(AndroidConnectionHelper.getInstance().isServerStarted()){
@@ -83,6 +96,7 @@ public class VisionSidePegAutoMode extends AutoModeBase {
 		System.out.println("Starting "+this.toString()+" Auto Mode");
 		Logger.getInstance().logRobotThread("Starting "+this.toString()+" Auto Mode");
 
+		// Revert to motion magic side peg if vision app fails to connect properly
 		if (!AndroidConnectionHelper.getInstance().isServerStarted() || !AndroidConnectionHelper.getInstance().isNexusConnected()) {
 			System.out.println("Vision server not started!");
 			Logger.getInstance().logRobotThread("Vision server not detected, fallback to default side peg");
@@ -115,9 +129,9 @@ public class VisionSidePegAutoMode extends AutoModeBase {
 		
 		sequence.add(getDriveToAirship());
 		sequence.add(getFirstAttempt());
-		sequence.add(new TimeoutRoutine(pilotWaitTime));	// Wait so pilot can pull gear out
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));	// Wait so pilot can pull gear out
 		if (mBackup) {
-			sequence.add(getBackup(sliderPositions[1]));
+			sequence.add(getBackup(mSliderPositions[1]));
 		}
 
 		mSequentialRoutine = new SequentialRoutine(sequence);
@@ -149,16 +163,17 @@ public class VisionSidePegAutoMode extends AutoModeBase {
 			driveForwardSetpoint = 0;
 			break;
 		}
-		driveForwardSetpoint += overshootDistance;
+		driveForwardSetpoint += kOvershootDistance;
 		driveForward.leftMotor.setMotionMagic(driveForwardSetpoint, mLongGains,
 				Gains.kSteikLongDriveMotionMagicCruiseVelocity, Gains.kSteikLongDriveMotionMagicMaxAcceleration);
 		driveForward.rightMotor.setMotionMagic(driveForwardSetpoint, mLongGains,
 				Gains.kSteikLongDriveMotionMagicCruiseVelocity, Gains.kSteikLongDriveMotionMagicMaxAcceleration);
 		
+		// Drive forward while moving slider to initial position
 		Logger.getInstance().logRobotThread("Drive forward", driveForward);
 		ArrayList<Routine> initialSlide = new ArrayList<>();
 		initialSlide.add(new CANTalonRoutine(driveForward, true));
-		initialSlide.add(new CustomPositioningSliderRoutine(sliderPositions[0]));
+		initialSlide.add(new CustomPositioningSliderRoutine(mSliderPositions[0]));
 		return new ParallelRoutine(initialSlide);
 	}
 	/*
@@ -187,7 +202,8 @@ public class VisionSidePegAutoMode extends AutoModeBase {
 			driveToAirshipSetpoint = 0;
 			break;
 		}
-		driveToAirshipSetpoint -= bonusDistance*Constants.kDriveTicksPerInch;
+		// Stop before reaching airship
+		driveToAirshipSetpoint -= kBonusDistance*Constants.kDriveTicksPerInch;
 		driveToAirship.leftMotor.setMotionMagic(driveToAirshipSetpoint, mLongGains,
 				Gains.kSteikLongDriveMotionMagicCruiseVelocity, Gains.kSteikLongDriveMotionMagicMaxAcceleration);
 		driveToAirship.rightMotor.setMotionMagic(driveToAirshipSetpoint, mLongGains,
@@ -196,15 +212,19 @@ public class VisionSidePegAutoMode extends AutoModeBase {
 		Logger.getInstance().logRobotThread("Drive to airship", driveToAirship);
 		return new CANTalonRoutine(driveToAirship, true, 5);
 	}
-	
+	/*
+	 * GET FIRST ATTEMPT
+	 */
 	private Routine getFirstAttempt() {
-		double scoreSetpoint = bonusDistance*Constants.kDriveTicksPerInch;
+		double scoreSetpoint = kBonusDistance*Constants.kDriveTicksPerInch;
 		scoreSetpoint += 2;
 		DriveSignal driveScore = DriveSignal.getNeutralSignal();
 		driveScore.leftMotor.setMotionMagic(scoreSetpoint, mShortGains,
 				Gains.kSteikShortDriveMotionMagicCruiseVelocity, Gains.kSteikShortDriveMotionMagicMaxAcceleration);
 		driveScore.rightMotor.setMotionMagic(scoreSetpoint, mShortGains,
 				Gains.kSteikShortDriveMotionMagicCruiseVelocity, Gains.kSteikShortDriveMotionMagicMaxAcceleration);
+		
+		// Move slider using vision, then drive to peg
 		ArrayList<Routine> scoreSequence = new ArrayList<>();
 		scoreSequence.add(new VisionSliderRoutine());
 		scoreSequence.add(new CANTalonRoutine(driveScore, true));
@@ -217,7 +237,7 @@ public class VisionSidePegAutoMode extends AutoModeBase {
 		DriveSignal driveBackup = DriveSignal.getNeutralSignal();
 		DriveSignal driveReturn = DriveSignal.getNeutralSignal();
 
-		double driveBackupSetpoint = -backupDistance * Constants.kDriveTicksPerInch;
+		double driveBackupSetpoint = -kBackupDistance * Constants.kDriveTicksPerInch;
 		driveBackup.leftMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
 				Gains.kSteikShortDriveMotionMagicCruiseVelocity, Gains.kSteikShortDriveMotionMagicMaxAcceleration);
 		driveBackup.rightMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
@@ -239,7 +259,7 @@ public class VisionSidePegAutoMode extends AutoModeBase {
 		parallelSliding.add(new SequentialRoutine(slideSequence));
 		sequence.add(new ParallelRoutine(parallelSliding));
 		sequence.add(new CANTalonRoutine(driveReturn, true, 2));
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		
 		return new SequentialRoutine(sequence);
 	}
@@ -265,10 +285,10 @@ public class VisionSidePegAutoMode extends AutoModeBase {
 			name += "SidePeg";
 			break;
 		}
-		name += "SliderInitialMove"+sliderPositions[0];
+		name += "SliderInitialMove"+mSliderPositions[0];
 		name += "EncoderTurn";
 		if (mBackup) {
-			name += "Backup"+sliderPositions[1];
+			name += "Backup"+mSliderPositions[1];
 		} else {
 			name += "NotBackup";
 		}

@@ -4,34 +4,41 @@ import com.palyrobotics.frc2017.config.Gains;
 
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
+/**
+ * Handles input of data into the dashboard
+ * @author Robbie Selwyn
+ */
 public class DashboardManager {
 
 	// Usage of cantable or not
-	private boolean enableCANTable = false;
+	private boolean mEnableCANTable = false;
 
 	// Allow motion profile gains to be modified over NT
-	public final boolean pidTuning = false;
-
-	private static DashboardManager instance = new DashboardManager();
+	public final boolean kPidTuning = false;
 	
 	public static final String TABLE_NAME = "RobotTable";
 	public static final String CAN_TABLE_NAME = "data_table";
 	
-	public NetworkTable robotTable;
-	private NetworkTable canTable;
+	public NetworkTable mRobotTable;
+	private NetworkTable mCanTable;
 	
+	// Singleton setup
+	private static DashboardManager instance = new DashboardManager();
 	public static DashboardManager getInstance() {
 		return instance;
 	}
 	
 	private DashboardManager() {}
 	
+	/**
+	 * Initialize network tables
+	 */
 	public void robotInit() {
 		try {
-			this.robotTable = NetworkTable.getTable(TABLE_NAME);
+			this.mRobotTable = NetworkTable.getTable(TABLE_NAME);
 			Gains.initNetworkTableGains();
-			if (enableCANTable) {
-				this.canTable = NetworkTable.getTable(CAN_TABLE_NAME);
+			if (mEnableCANTable) {
+				this.mCanTable = NetworkTable.getTable(CAN_TABLE_NAME);
 				NetworkTable.setUpdateRate(.015);
 			}
 		}
@@ -43,13 +50,13 @@ public class DashboardManager {
 	}
 	
 	/**
-	 * Publishes a KV pair to the Network Table.
+	 * Publishes a KV pair to the Robot Network Table.
 	 * @param d	The dashboard value.
 	 */
 	public void publishKVPair(DashboardValue d) {
-		if (robotTable == null) {
+		if (mRobotTable == null) {
 			try {
-				this.robotTable = NetworkTable.getTable(TABLE_NAME);
+				this.mRobotTable = NetworkTable.getTable(TABLE_NAME);
 			}
 			catch (UnsatisfiedLinkError e) {
 				// Block the error in a unit test and don't publish the value.
@@ -58,21 +65,26 @@ public class DashboardManager {
 		}
 		
 		// If we are now connected
-		if (robotTable != null) {
-			robotTable.putString(d.getKey(), d.getValue());
+		if (mRobotTable != null) {
+			mRobotTable.putString(d.getKey(), d.getValue());
 		}
 	}
 	
+	/**
+	 * Publishes CAN updates to the CAN Network Table.
+	 * @param string The dashboard value.
+	 */
 	public void updateCANTable(String string) {
-		if (enableCANTable) {
+		if (mEnableCANTable) {
 			return;
 		}
-		if (canTable != null) {
-			canTable.putString("status", string+"\n");
+		if (mCanTable != null) {
+			// dashboard is connected
+			mCanTable.putString("status", string+"\n");
 		} else {
 			// try to reach it again
 			try {
-				this.canTable = NetworkTable.getTable(CAN_TABLE_NAME);
+				this.mCanTable = NetworkTable.getTable(CAN_TABLE_NAME);
 			}
 			catch (UnsatisfiedLinkError e) {
 			}
@@ -86,14 +98,14 @@ public class DashboardManager {
 	 */
 	public void toggleCANTable(boolean start) {
 		if (start) {
-			if (canTable != null) {
-				canTable.putString("start", "true");
-				canTable.putString("end", "false");
+			if (mCanTable != null) {
+				mCanTable.putString("start", "true");
+				mCanTable.putString("end", "false");
 			}
 		} else {
-			if (canTable != null) {
-				canTable.putString("start", "false");
-				canTable.putString("end", "true");
+			if (mCanTable != null) {
+				mCanTable.putString("start", "false");
+				mCanTable.putString("end", "true");
 			}
 		}
 	}

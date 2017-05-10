@@ -23,6 +23,9 @@ public class Pose {
 	public Optional<Double> leftError;
 	public Optional<Double> rightError;
 
+	/**
+	 * Default Constructor
+	 */
 	public Pose() {
 		this.leftEnc = 0; this.leftEncVelocity = 0; this.leftSpeed = 0;
 		this.rightEnc = 0; this.rightEncVelocity = 0; this.rightSpeed = 0;
@@ -30,6 +33,10 @@ public class Pose {
 		this.leftError = Optional.empty();
 		this.rightError = Optional.empty();
 	}
+	/**
+	 * Constructor
+	 * Sensor values taken from left/right drivetrain master talons and gyro
+	 */
 	public Pose(double leftEnc, double leftEncVelocity, double leftSpeed,
 				double rightEnc, double rightEncVelocity, double rightSpeed,
 				double leftError, double rightError, double heading, double headingVelocity) {
@@ -44,6 +51,10 @@ public class Pose {
 		this.heading = heading;
 		this.headingVelocity = headingVelocity;
 	}
+	/**
+	 * Constructor
+	 * Sensor values taken from left/right drivetrain master talons and gyro
+	 */
 	public Pose(double leftEnc, double leftEncVelocity, double leftSpeed,
 				double rightEnc, double rightEncVelocity, double rightSpeed,
 				double heading, double headingVelocity) {
@@ -59,7 +70,9 @@ public class Pose {
 		this.rightError = Optional.empty();
 	}
 
-	// TODO: Copy and equals methods
+	/**
+	 * @return A copy of this Pose object
+	 */
 	public Pose copy() {
 		Pose copy = new Pose();
 		copy.leftEnc = this.leftEnc;
@@ -75,6 +88,10 @@ public class Pose {
 		return copy;
 	}
 	
+	/**
+	 * @param other Pose for comparison
+	 * @return Whether or not both Poses contain the same values
+	 */
 	public boolean equals(Pose other) {
 		return this.leftEnc == other.leftEnc &&
 				this.leftEncVelocity == other.leftEncVelocity &&

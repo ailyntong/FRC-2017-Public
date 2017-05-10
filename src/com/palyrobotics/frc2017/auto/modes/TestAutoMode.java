@@ -6,18 +6,12 @@ import com.palyrobotics.frc2017.auto.AutoModeBase;
 import com.palyrobotics.frc2017.behavior.ParallelRoutine;
 import com.palyrobotics.frc2017.behavior.Routine;
 import com.palyrobotics.frc2017.behavior.SequentialRoutine;
-import com.palyrobotics.frc2017.behavior.TimedRoutine;
-import com.palyrobotics.frc2017.behavior.routines.SliderSensorResetRoutine;
 import com.palyrobotics.frc2017.behavior.routines.SpatulaDownAutocorrectRoutine;
 import com.palyrobotics.frc2017.behavior.routines.drive.CANTalonRoutine;
 import com.palyrobotics.frc2017.behavior.routines.drive.EncoderTurnAngleRoutine;
-import com.palyrobotics.frc2017.behavior.routines.scoring.AutocorrectPositioningSliderRoutine;
 import com.palyrobotics.frc2017.behavior.routines.scoring.CustomPositioningSliderRoutine;
-import com.palyrobotics.frc2017.behavior.routines.scoring.ManualControlSliderRoutine;
-import com.palyrobotics.frc2017.behavior.routines.scoring.VisionSliderRoutine;
 import com.palyrobotics.frc2017.config.Constants;
 import com.palyrobotics.frc2017.config.Gains;
-import com.palyrobotics.frc2017.subsystems.Slider;
 import com.palyrobotics.frc2017.util.archive.DriveSignal;
 
 /**
@@ -72,8 +66,11 @@ public class TestAutoMode extends AutoModeBase {
 		System.out.println("Starting TestAutoMode");
 	}
 
+	/**
+	 * Backup from peg while lowering spatula, then turn 180 degrees in preparation for motion profile
+	 */
 	private SequentialRoutine getDrop() {
-		Gains 	mShortGains = Gains.steikShortDriveMotionMagicGains;
+		Gains mShortGains = Gains.steikShortDriveMotionMagicGains;
 
 
 		DriveSignal driveBackup = DriveSignal.getNeutralSignal();

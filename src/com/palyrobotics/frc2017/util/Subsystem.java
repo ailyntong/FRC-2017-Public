@@ -4,6 +4,11 @@ import com.palyrobotics.frc2017.config.Commands;
 import com.palyrobotics.frc2017.config.RobotState;
 import com.palyrobotics.frc2017.util.archive.SubsystemLoop;
 
+/**
+ * Template for subsystems that will run using SubsystemLooper
+ * @author Nihar Mitra
+ *
+ */
 public abstract class Subsystem implements SubsystemLoop {
 	private String mName;
 

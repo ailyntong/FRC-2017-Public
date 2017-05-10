@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import com.palyrobotics.frc2017.behavior.Routine;
 import com.palyrobotics.frc2017.util.archive.DriveSignal;
-import com.palyrobotics.frc2017.util.logger.Logger;
 import com.palyrobotics.frc2017.subsystems.Climber;
 import com.palyrobotics.frc2017.subsystems.Drive;
 import com.palyrobotics.frc2017.subsystems.Flippers;
@@ -24,6 +23,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid;
  *
  */
 public class Commands {
+	// Store routines to be added to RoutineManager
 	public ArrayList<Routine> wantedRoutines = new ArrayList<Routine>();
 
 	// Store WantedStates for each subsystem state machine
@@ -35,6 +35,10 @@ public class Commands {
 	public Intake.IntakeState wantedIntakeState = Intake.IntakeState.IDLE;
 	public Climber.ClimberState wantedClimberState = Climber.ClimberState.IDLE;
 
+	/**
+	 * Adds a wanted routine. Ignores duplicates
+	 * @param wantedRoutine Routine to be added to RoutineManager
+	 */
 	public void addWantedRoutine(Routine wantedRoutine) {
 		for(Routine routine : wantedRoutines) {
 			if(routine.getClass().equals(wantedRoutine.getClass())) {
@@ -62,6 +66,7 @@ public class Commands {
 		public void reset() {
 			drivePowerSetpoint = Optional.empty();
 			sliderSetpoint = Slider.SliderTarget.NONE;
+			sliderCustomSetpoint = Optional.empty();
 		}
 	}
 	// All robot setpoints
@@ -72,6 +77,10 @@ public class Commands {
 	 * @author Nihar
 	 */
 	public static class JoystickInput {
+		/**
+		 * Subclass to store Xbox input
+		 * @author Nihar Mitra
+		 */
 		public static class XboxInput extends JoystickInput {
 			public double leftX, leftY, rightX, rightY;
 			public XboxInput(double leftX, double leftY, double rightX, double rightY) {
@@ -106,19 +115,21 @@ public class Commands {
 	 */
 	public Commands copy() {
 		Commands copy = new Commands();
+		// Copy wanted states
 		copy.wantedDriveState = this.wantedDriveState;
 		copy.wantedFlipperSignal = this.wantedFlipperSignal;
 		copy.wantedSpatulaState = this.wantedSpatulaState;
 		copy.wantedSliderState = this.wantedSliderState;
 		copy.wantedIntakeState = this.wantedIntakeState;
 		copy.wantedClimberState = this.wantedClimberState;
-
+		// Copy joystick input
 		copy.cancelCurrentRoutines = this.cancelCurrentRoutines;
 		copy.leftStickInput = this.leftStickInput;
 		copy.rightStickInput = this.rightStickInput;
 		copy.sliderStickInput = this.sliderStickInput;
 		copy.climberStickInput = this.climberStickInput;
 
+		// Copy wanted routines
 		for (Routine r : this.wantedRoutines) {
 			copy.wantedRoutines.add(r);
 		}
@@ -129,6 +140,7 @@ public class Commands {
 		robotSetpoints.drivePowerSetpoint.ifPresent((DriveSignal signal) -> copy.robotSetpoints.drivePowerSetpoint = Optional.of(signal));
 		copy.robotSetpoints.sliderSetpoint = robotSetpoints.sliderSetpoint;
 		robotSetpoints.sliderCustomSetpoint.ifPresent((Double setpoint) -> copy.robotSetpoints.sliderCustomSetpoint = Optional.of(setpoint));
+		
 		return copy;
 	}
 

@@ -9,42 +9,56 @@ import com.palyrobotics.frc2017.util.CANTalonOutput;
 import com.palyrobotics.frc2017.util.Pose;
 import com.palyrobotics.frc2017.util.archive.DriveSignal;
 
+/**
+ * Controller used for offboard turn angle
+ * @author Eric Liu
+ */
 public class EncoderTurnAngleController implements DriveController {
 
-	private Pose cachedPose;
-	private double leftTarget;
-	private double rightTarget;
-	private double maxAccel;
-	private double maxVel;
-	private Gains mGains;
-	private CANTalonOutput leftOutput;
-	private CANTalonOutput rightOutput;
+	private Pose mCachedPose;				// Store previous drive pose
+	private double mLeftTarget;				// Absolute setpoint in encoder ticks
+	private double mRightTarget;			// Absolute setpoint in encoder ticks
+	private final double kMaxAccel;			// m/s^2
+	private final double kMaxVel;			// m/s
+	private Gains mGains;					// PID gains
+	private CANTalonOutput mLeftOutput;		// Left master talon output
+	private CANTalonOutput mRightOutput;	// Right master talon output
 	
+	/**
+	 * Constructor
+	 * @param priorSetpoint Original drivetrain pose
+	 * @param angle Relative target in degrees
+	 */
 	public EncoderTurnAngleController(Pose priorSetpoint, double angle) {
-		leftTarget = priorSetpoint.leftEnc + (angle * Constants.kDriveInchesPerDegree * Constants.kDriveTicksPerInch);
-		System.out.println("Left target: "+leftTarget);
-		rightTarget = priorSetpoint.rightEnc - (angle * Constants.kDriveInchesPerDegree * Constants.kDriveTicksPerInch);
-		System.out.println("Right target: "+rightTarget);
-		cachedPose = priorSetpoint;
-		this.maxAccel = (Constants.kRobotName == Constants.RobotName.DERICA) ? Gains.kDericaTurnMotionMagicCruiseVelocity : (72 * Constants.kDriveSpeedUnitConversion);
-		this.maxVel = (Constants.kRobotName == Constants.RobotName.DERICA) ?  Gains.kDericaTurnMotionMagicCruiseAccel : (36 * Constants.kDriveSpeedUnitConversion);
-
+		// Initialize setpoints
+		mLeftTarget = priorSetpoint.leftEnc + (angle * Constants.kDriveInchesPerDegree * Constants.kDriveTicksPerInch);
+		System.out.println("Left target: "+mLeftTarget);
+		mRightTarget = priorSetpoint.rightEnc - (angle * Constants.kDriveInchesPerDegree * Constants.kDriveTicksPerInch);
+		System.out.println("Right target: "+mRightTarget);
+		mCachedPose = priorSetpoint;
+		// Initialize max acceleration and velocity
+		this.kMaxAccel = (Constants.kRobotName == Constants.RobotName.DERICA) ? Gains.kDericaTurnMotionMagicCruiseVelocity : (72 * Constants.kDriveSpeedUnitConversion);
+		this.kMaxVel = (Constants.kRobotName == Constants.RobotName.DERICA) ?  Gains.kDericaTurnMotionMagicCruiseAccel : (36 * Constants.kDriveSpeedUnitConversion);
+		// Initialize PID gains
 		if(Constants.kRobotName.equals(Constants.RobotName.STEIK)) {
 			mGains = new Gains(6.0, 0.01, 210, 2.0, 50, 0.0);
 		} else {
 			mGains = Gains.dericaPosition;
 		}
-
-		leftOutput = new CANTalonOutput();
-		leftOutput.setMotionMagic(leftTarget, mGains, maxVel, maxAccel);
-		rightOutput = new CANTalonOutput();
-		rightOutput.setMotionMagic(rightTarget, mGains, maxVel, maxAccel);
+		// Initialize CANTalonOutputs
+		mLeftOutput = new CANTalonOutput();
+		mLeftOutput.setMotionMagic(mLeftTarget, mGains, kMaxVel, kMaxAccel);
+		mRightOutput = new CANTalonOutput();
+		mRightOutput.setMotionMagic(mRightTarget, mGains, kMaxVel, kMaxAccel);
 	}
 
+	/**
+	 * @return Whether the robot is within position and velocity tolerance of target
+	 */
 	@Override
 	public boolean onTarget() {
-		if(Robot.getRobotState().leftSetpoint != leftOutput.getSetpoint() || Robot.getRobotState().rightSetpoint != rightOutput.getSetpoint() ||
-				Robot.getRobotState().leftControlMode != leftOutput.getControlMode() || Robot.getRobotState().rightControlMode != rightOutput.getControlMode()) {
+		if(Robot.getRobotState().leftSetpoint != mLeftOutput.getSetpoint() || Robot.getRobotState().rightSetpoint != mRightOutput.getSetpoint() ||
+				Robot.getRobotState().leftControlMode != mLeftOutput.getControlMode() || Robot.getRobotState().rightControlMode != mRightOutput.getControlMode()) {
 			System.out.println("Mismatched desired talon and actual talon states!");
 			return false;
 		}
@@ -53,30 +67,36 @@ public class EncoderTurnAngleController implements DriveController {
 				Constants.kDriveInchesPerDegree * Constants.kDriveTicksPerInch;
 		double velocityTolerance = (Constants.kRobotName == Constants.RobotName.DERICA) ? Constants2016.kAcceptableDriveVelocityError : Constants.kAcceptableDriveVelocityError;
 
-		if(cachedPose == null) {
+		if(mCachedPose == null) {
 			System.out.println("Cached pose is null");
 			return false;
 		}
 //		System.out.println("Left: " + Math.abs(leftTarget - cachedPose.leftEnc) + 
 //				"Right: " + Math.abs(rightTarget - cachedPose.rightEnc));
-		if(Math.abs(cachedPose.leftSpeed) < velocityTolerance && Math.abs(cachedPose.rightSpeed) < velocityTolerance &&
-				Math.abs(leftTarget - cachedPose.leftEnc) < positionTolerance && Math.abs(rightTarget - cachedPose.rightEnc) < positionTolerance) {
+		if(Math.abs(mCachedPose.leftSpeed) < velocityTolerance && Math.abs(mCachedPose.rightSpeed) < velocityTolerance &&
+				Math.abs(mLeftTarget - mCachedPose.leftEnc) < positionTolerance && Math.abs(mRightTarget - mCachedPose.rightEnc) < positionTolerance) {
 			System.out.println("turn angle done");
 			return true;
 		}
 		else return false;
 	}
 
+	/**
+	 * Updates controller's robot state
+	 * @return Target signal
+	 */
 	@Override
 	public DriveSignal update(RobotState state) {
-		cachedPose = state.drivePose;
-		return new DriveSignal(leftOutput, rightOutput);
-		
+		mCachedPose = state.drivePose;
+		return new DriveSignal(mLeftOutput, mRightOutput);
 	}
 
+	/**
+	 * @return Setpoint
+	 */
 	@Override
 	public Pose getSetpoint() {
-		return new Pose(leftTarget, 0, 0, rightTarget, 0, 0, 0, 0, 0, 0);
+		return new Pose(mLeftTarget, 0, 0, mRightTarget, 0, 0, 0, 0, 0, 0);
 	}
 
 }

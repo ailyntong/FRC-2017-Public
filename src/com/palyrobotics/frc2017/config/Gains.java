@@ -2,12 +2,16 @@ package com.palyrobotics.frc2017.config;
 
 import com.palyrobotics.frc2017.config.dashboard.DashboardManager;
 
+/**
+ * Stores control loop gains
+ * @author Ailyn Tong
+ *
+ */
 public class Gains {
 	/*
 	 * STEIK
 	 */
 	// Onboard motion profile aka trajectory follower
-
 	public static double kSteikTrajectorykP = 0.38; //0.7, 0.8, 1.00, 0.05
 	public static double kSteikTrajectorykD = 0.0; // 0.1, 0.015
 	public static double kSteikTrajectorykV = 0.069;
@@ -17,11 +21,13 @@ public class Gains {
 	public static final Gains.TrajectoryGains kTrajectoryGains = new TrajectoryGains(kSteikTrajectorykP,
 			kSteikTrajectorykD, kSteikTrajectorykV, kSteikTrajectorykA, kSteikTrajectoryTurnkP,
 			kSteikTrajectoryTurnkD);
+	
+	// Onboard straight trajectory follower
 	public static final double kSteikTrajectoryStraightkP = 0.38; // 1
 	public static final double kSteikTrajectoryStraightkD = 0.0; // 0.02
 	public static double kSteikTrajectoryStraightTurnkP = 0.027;//0.01; //-0.01
 	public static double kSteikTrajectoryStraightTurnkD = 0.01;
-	public static final TrajectoryGains kStraightTrajectoryGains = new TrajectoryGains(kSteikTrajectoryStraightkP,
+	public static final TrajectoryGains kTrajectoryStraightGains = new TrajectoryGains(kSteikTrajectoryStraightkP,
 			kSteikTrajectoryStraightkD, kSteikTrajectorykV, kSteikTrajectorykA,
 			kSteikTrajectoryStraightTurnkP, kSteikTrajectoryStraightTurnkD);
 
@@ -130,6 +136,10 @@ public class Gains {
 	public static final double kDericaTurnMotionMagicCruiseVelocity = 1;
 	public static final double kDericaTurnMotionMagicCruiseAccel = 1;
 
+	/**
+	 * Stores control loop gains for motion profiles
+	 * @author Nihar Mitra
+	 */
 	public static class TrajectoryGains {
 		public final double P,D,V,A, turnP, turnD;
 		public TrajectoryGains(double p, double d, double v, double a, double turnP, double turnD) {
@@ -154,6 +164,11 @@ public class Gains {
 		this.rampRate = rampRate;
 	}
 
+	/**
+	 * Compares two sets of gains
+	 * @param other Gains to compare with
+	 * @return Whether both sets have the same values
+	 */
 	@Override
 	public boolean equals(Object other) {
 		return ((Gains)other).P == this.P &&
@@ -164,23 +179,29 @@ public class Gains {
 				((Gains) other).rampRate == this.rampRate;
 	}
 	
+	/**
+	 * Adds motion profile gains to dashboard
+	 */
 	public static void initNetworkTableGains() {
-		if (DashboardManager.getInstance().pidTuning) {
-			DashboardManager.getInstance().robotTable.putNumber("kP", kSteikTrajectorykP);
-			DashboardManager.getInstance().robotTable.putNumber("kD", kSteikTrajectorykD);
-			DashboardManager.getInstance().robotTable.putNumber("kV", kSteikTrajectorykV);
-			DashboardManager.getInstance().robotTable.putNumber("kA", kSteikTrajectorykA);
-			DashboardManager.getInstance().robotTable.putNumber("TurnKp", kSteikTrajectoryTurnkP);
+		if (DashboardManager.getInstance().kPidTuning) {
+			DashboardManager.getInstance().mRobotTable.putNumber("kP", kSteikTrajectorykP);
+			DashboardManager.getInstance().mRobotTable.putNumber("kD", kSteikTrajectorykD);
+			DashboardManager.getInstance().mRobotTable.putNumber("kV", kSteikTrajectorykV);
+			DashboardManager.getInstance().mRobotTable.putNumber("kA", kSteikTrajectorykA);
+			DashboardManager.getInstance().mRobotTable.putNumber("TurnKp", kSteikTrajectoryTurnkP);
 		}
 	}
 	
+	/**
+	 * Updates dashboard motion profile gains
+	 */
 	public static void updateNetworkTableGains() {
-		if (DashboardManager.getInstance().pidTuning) {
-			kSteikTrajectorykP = DashboardManager.getInstance().robotTable.getNumber("kP", kSteikTrajectorykP);
-			kSteikTrajectorykD = DashboardManager.getInstance().robotTable.getNumber("kD", kSteikTrajectorykD);
-			kSteikTrajectorykV = DashboardManager.getInstance().robotTable.getNumber("kV", kSteikTrajectorykV);
-			kSteikTrajectorykA = DashboardManager.getInstance().robotTable.getNumber("kA", kSteikTrajectorykA);
-			kSteikTrajectoryTurnkP = DashboardManager.getInstance().robotTable.getNumber("TurnkP", kSteikTrajectoryTurnkP);
+		if (DashboardManager.getInstance().kPidTuning) {
+			kSteikTrajectorykP = DashboardManager.getInstance().mRobotTable.getNumber("kP", kSteikTrajectorykP);
+			kSteikTrajectorykD = DashboardManager.getInstance().mRobotTable.getNumber("kD", kSteikTrajectorykD);
+			kSteikTrajectorykV = DashboardManager.getInstance().mRobotTable.getNumber("kV", kSteikTrajectorykV);
+			kSteikTrajectorykA = DashboardManager.getInstance().mRobotTable.getNumber("kA", kSteikTrajectorykA);
+			kSteikTrajectoryTurnkP = DashboardManager.getInstance().mRobotTable.getNumber("TurnkP", kSteikTrajectoryTurnkP);
 		}
 	}
 }

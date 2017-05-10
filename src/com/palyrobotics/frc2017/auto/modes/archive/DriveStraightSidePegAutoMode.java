@@ -27,13 +27,18 @@ public class DriveStraightSidePegAutoMode extends AutoModeBase {
 	
 	private SequentialRoutine mSequentialRoutine;
 
-	private final double pilotWaitTime = 2.5; // time in seconds
-	private final double backupDistance = 10;	// distance in inches
-	private final double neutralZoneDistance = 12 * 14;	// distance in inches
+	private final double kPilotWaitTime = 2.5; // time in seconds
+	private final double kBackupDistance = 10;	// distance in inches
+	private final double kNeutralZoneDistance = 12 * 14;	// distance in inches
 
-	private double initialSliderPosition = 0;	// slider position in inches
-	private double backupPosition = 0;	// slider position in inches
+	private double mInitialSliderPosition = 0;	// slider position in inches
+	private double mBackupPosition = 0;	// slider position in inches
 
+	/**
+	 * Constructor
+	 * @param direction Alliance color and side of target peg
+	 * @param postScore Desired action after initial attempt
+	 */
 	public DriveStraightSidePegAutoMode(SidePegAutoMode.SideAutoVariant direction, SidePegAutoMode.SideAutoPostVariant postScore) {
 		mVariant = direction;
 		mPostVariant = postScore;
@@ -53,34 +58,36 @@ public class DriveStraightSidePegAutoMode extends AutoModeBase {
 
 		sequence.add(getDriveForward());
 
+		// Turn angle and initialize backup slider position
 		// NOTE: switch case falling, split by lefts vs rights
 		switch (mVariant) {
 		case RED_LOADING:
-			backupPosition = 3;
+			mBackupPosition = 3;
 			sequence.add(new GyroMotionMagicTurnAngleRoutine(Constants.kSidePegTurnAngleDegrees));
 			break;
 		case BLUE_BOILER:
-			backupPosition = 1; //-3
+			mBackupPosition = 1; //-3
 			sequence.add(new GyroMotionMagicTurnAngleRoutine(Constants.kSidePegTurnAngleDegrees));
 			break;
 		case RED_BOILER:
-			backupPosition = 2;
+			mBackupPosition = 2;
 			sequence.add(new GyroMotionMagicTurnAngleRoutine(-Constants.kSidePegTurnAngleDegrees));
 			break;
 		case BLUE_LOADING:
-			backupPosition = -4;
+			mBackupPosition = -4;
 			sequence.add(new GyroMotionMagicTurnAngleRoutine(-Constants.kSidePegTurnAngleDegrees));
 			break;
 		}
 		
 		sequence.add(getDriveToAirship());
-		sequence.add(new TimeoutRoutine(pilotWaitTime));	// Wait 2.5s so pilot can pull gear out
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));	// Wait for pilot to pull gear out
 
+		// Add additional routines based on desired post-score action
 		switch (mPostVariant) {
 		case NONE:
 			break;
 		case BACKUP:
-			sequence.add(getBackup(backupPosition));
+			sequence.add(getBackup(mBackupPosition));
 			break;
 		case NEUTRAL_ZONE:
 			sequence.add(getDriveToNeutralZone());
@@ -98,20 +105,20 @@ public class DriveStraightSidePegAutoMode extends AutoModeBase {
 		switch (mVariant) {
 		// loading station side
 		case RED_LOADING:
-			initialSliderPosition = 0;
+			mInitialSliderPosition = 0;
 			driveForwardSetpoint = AutoDistances.kRedLoadingStationForwardDistanceInches;
 			break;
 		case BLUE_LOADING:
-			initialSliderPosition = -1.5;
+			mInitialSliderPosition = -1.5;
 			driveForwardSetpoint = AutoDistances.kBlueLoadingStationForwardDistanceInches;
 			break;
 		// boiler side
 		case RED_BOILER:
-			initialSliderPosition = 0;
+			mInitialSliderPosition = 0;
 			driveForwardSetpoint = AutoDistances.kRedBoilerForwardDistanceInches;
 			break;
 		case BLUE_BOILER:
-			initialSliderPosition = 2.5;
+			mInitialSliderPosition = 2.5;
 			driveForwardSetpoint = AutoDistances.kBlueBoilerForwardDistanceInches;
 			break;
 		default:
@@ -121,9 +128,11 @@ public class DriveStraightSidePegAutoMode extends AutoModeBase {
 		}
 		
 		Logger.getInstance().logRobotThread("Drive forward", driveForwardSetpoint);
+		
+		// Drive forward while moving slider to initial position
 		ArrayList<Routine> initialSlide = new ArrayList<>();
 		initialSlide.add(new DriveStraightRoutine(driveForwardSetpoint));
-		initialSlide.add(new CustomPositioningSliderRoutine(initialSliderPosition));
+		initialSlide.add(new CustomPositioningSliderRoutine(mInitialSliderPosition));
 		return new ParallelRoutine(initialSlide);
 	}
 	/*
@@ -151,7 +160,7 @@ public class DriveStraightSidePegAutoMode extends AutoModeBase {
 			driveToAirshipSetpoint = 0;
 			break;
 		}
-		driveToAirshipSetpoint += 2 * Constants.kDriveTicksPerInch;
+		driveToAirshipSetpoint += 2 * Constants.kDriveTicksPerInch;	// Drive extra to ensure gear is on peg
 		
 		Logger.getInstance().logRobotThread("Drive to airship", driveToAirshipSetpoint);
 		return new DriveStraightRoutine(driveToAirshipSetpoint);
@@ -160,7 +169,7 @@ public class DriveStraightSidePegAutoMode extends AutoModeBase {
 	 * GET BACKUP
 	 */
 	private SequentialRoutine getBackup(double sliderPosition) {
-		double driveBackupSetpoint = -backupDistance;
+		double driveBackupSetpoint = -kBackupDistance;
 		
 		// Create a routine that drives back, then moves the slider while moving back forward
 		ArrayList<Routine> sequence = new ArrayList<>();
@@ -172,7 +181,7 @@ public class DriveStraightSidePegAutoMode extends AutoModeBase {
 		parallelSliding.add(new SequentialRoutine(slideSequence));
 		sequence.add(new ParallelRoutine(parallelSliding));
 		sequence.add(new DriveStraightRoutine(-driveBackupSetpoint + 3));
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		
 		return new SequentialRoutine(sequence);
 	}
@@ -180,8 +189,8 @@ public class DriveStraightSidePegAutoMode extends AutoModeBase {
 	 * GET NEUTRAL ZONE
 	 */
 	private SequentialRoutine getDriveToNeutralZone() {
-		double driveBackupSetpoint = -(backupDistance + 12);
-		double driveToNeutralZoneSetpoint = neutralZoneDistance;
+		double driveBackupSetpoint = -(kBackupDistance + 12);
+		double driveToNeutralZoneSetpoint = kNeutralZoneDistance;
 		
 		ArrayList<Routine> sequence = new ArrayList<>();
 		
@@ -233,13 +242,13 @@ public class DriveStraightSidePegAutoMode extends AutoModeBase {
 			name = "DriveStraightSidePeg";
 			break;
 		}
-		name += "SliderInitialMove" + initialSliderPosition;
+		name += "SliderInitialMove" + mInitialSliderPosition;
 		name += "GyroTurn";
 		switch (mPostVariant) {
 		case NONE:
 			break;
 		case BACKUP:
-			name += "Backup" + backupPosition;
+			name += "Backup" + mBackupPosition;
 			break;
 		case NEUTRAL_ZONE:
 			name += "NeutralZone";

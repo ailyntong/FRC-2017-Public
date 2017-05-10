@@ -20,43 +20,55 @@ import java.util.ArrayList;
 
 /**
  * Created by Nihar on 4/13/17.
+ * Center peg autonomous
+ * Uses motion profile for initial attempt, motion magic for backup attempts
  */
 public class TrajectoryCenterPegAutoMode extends AutoModeBase {
-	private final Alliance mVariant;
-	private boolean mBackup = true;
-	private Path mPath;
+	// Stores configuration
+	private final Alliance mVariant;	// Alliance color
+	private boolean mBackup = true;	// Whether to conduct additional scoring attempts
+	private Path mPath;	// Motion profile path
 	
-	private final boolean mUseGyro = true;
+	private final boolean mUseGyro = true;	// Whether to use gyro correction in motion profile
 
-	private final Gains mShortGains;
-	private final Gains.TrajectoryGains mTrajectoryGains;
-	private final double backupDistance = 15;	// distance in inches
+	private final Gains mShortGains;	// Motion magic gains for backup
+	private final Gains.TrajectoryGains mTrajectoryGains;	// Motion profile gains
+	
+	private final double kBackupDistance = 15;	// distance in inches
+	
 	// Store the left/right slider positions
-	private double[] sliderPositions;
+	private double[] mSliderPositions;
+	private double[] kBlueSliderPositions = new double[]{2.5, 0, 4.5};
+	private double[] kRedSliderPositions = new double[]{0, 2.5, -3.5};
 
-	private double[] blueSliderPositions = new double[]{2.5, 0, 4.5};
-	private double[] redSliderPositions = new double[]{0, 2.5, -3.5};
-
-	private final double pilotWaitTime = 1.5;	// time in seconds
+	private final double kPilotWaitTime = 1.5;	// time in seconds
 
 	private SequentialRoutine mSequentialRoutine;
 	
+	/**
+	 * Constructor
+	 * @param variant Alliance color
+	 * @param backup Whether to conduct additional scoring attempts
+	 */
 	public TrajectoryCenterPegAutoMode(Alliance variant, boolean backup) {
 		AutoPathLoader.loadPaths();
 		mVariant = variant;
 		mBackup = backup;
-		mTrajectoryGains = Gains.kStraightTrajectoryGains;
+		mTrajectoryGains = Gains.kTrajectoryStraightGains;
 		switch (mVariant) {
 			case BLUE:
-				sliderPositions = blueSliderPositions;
+				mSliderPositions = kBlueSliderPositions;
 				break;
 			case RED:
-				sliderPositions = redSliderPositions;
+				mSliderPositions = kRedSliderPositions;
 				break;
 		}
 		mShortGains = Gains.steikShortDriveMotionMagicGains;
 	}
 
+	/**
+	 * Creates a SequentialRoutine that represents a series of autonomous actions
+	 */
 	@Override
 	public void prestart() {
 		ArrayList<Routine> sequence = new ArrayList<>();
@@ -73,23 +85,28 @@ public class TrajectoryCenterPegAutoMode extends AutoModeBase {
 
 		// Drive forward while moving slider to initial position
 		ArrayList<Routine> initialSlide = new ArrayList<>();
-		initialSlide.add(new CustomPositioningSliderRoutine(sliderPositions[0]));
+		initialSlide.add(new CustomPositioningSliderRoutine(mSliderPositions[0]));
 		initialSlide.add(new DrivePathRoutine(mPath, mTrajectoryGains, mUseGyro, false));
 		sequence.add(new ParallelRoutine(initialSlide));
 
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		// Wait for pilot and reset sensors
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		sequence.add(new DriveSensorResetRoutine());
 	
+		// Add second and third scoring attempts if specified
 		if (mBackup) {
-			sequence.add(getBackup(sliderPositions[1]));		// Move slider slightly to the left
-			sequence.add(new TimeoutRoutine(pilotWaitTime));
-			sequence.add(getBackup(sliderPositions[2]));		// Move slider slightly to the left
-			sequence.add(new TimeoutRoutine(pilotWaitTime));
+			sequence.add(getBackup(mSliderPositions[1]));
+			sequence.add(new TimeoutRoutine(1.5));
+			sequence.add(getBackup(mSliderPositions[2]));
+			sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		}
 		
 		mSequentialRoutine = new SequentialRoutine(sequence);
 	}
 
+	/**
+	 * @return The SequentialRoutine constructed in prestart()
+	 */
 	@Override
 	public Routine getRoutine() {
 		return mSequentialRoutine;
@@ -101,7 +118,7 @@ public class TrajectoryCenterPegAutoMode extends AutoModeBase {
 		DriveSignal driveBackup = DriveSignal.getNeutralSignal();
 		DriveSignal driveReturn = DriveSignal.getNeutralSignal();
 
-		double driveBackupSetpoint = -backupDistance * Constants.kDriveTicksPerInch;
+		double driveBackupSetpoint = -kBackupDistance * Constants.kDriveTicksPerInch;
 		driveBackup.leftMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
 				Gains.kSteikShortDriveMotionMagicCruiseVelocity, Gains.kSteikShortDriveMotionMagicMaxAcceleration);
 		driveBackup.rightMotor.setMotionMagic(driveBackupSetpoint, mShortGains, 
@@ -123,7 +140,7 @@ public class TrajectoryCenterPegAutoMode extends AutoModeBase {
 		parallelSliding.add(new SequentialRoutine(slideSequence));
 		sequence.add(new ParallelRoutine(parallelSliding));
 		sequence.add(new CANTalonRoutine(driveReturn, true, 1));
-		sequence.add(new TimeoutRoutine(pilotWaitTime));
+		sequence.add(new TimeoutRoutine(kPilotWaitTime));
 		
 		return new SequentialRoutine(sequence);
 	}
