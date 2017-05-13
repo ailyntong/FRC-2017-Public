@@ -42,7 +42,6 @@ public class SimpleClimber extends Subsystem implements SubsystemLoop {
 	@Override
 	public void update(Commands commands, RobotState robotState) {
 		//climberState = commands.wantedSimpleClimberState;
-
 		switch(climberState){
 		case CLIMBING:
 			climberSpeed = kClimberSpeed;

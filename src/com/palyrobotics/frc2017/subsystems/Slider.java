@@ -130,10 +130,6 @@ public class Slider extends Subsystem implements SubsystemLoop {
 	 */
 	public void run(Commands commands,  Object master) throws IllegalAccessException {
 		//Throws an exception if called by an object that isn't a routine
-		if(!(master instanceof Routine)) {
-			throw new IllegalAccessException();
-		}
-		
 		mState = commands.wantedSliderState;
 		
 		switch(mState) {
@@ -151,25 +147,8 @@ public class Slider extends Subsystem implements SubsystemLoop {
 				break;
 			case AUTOMATIC_POSITIONING:
 				mTarget = commands.robotSetpoints.sliderSetpoint;
-				if (isEncoderFunctional) {
-					setSetpointsEncoder();
-				} else if (isPotentiometerFunctional) {
-					setSetpointsPotentiometer();
-				} else {
-					System.err.println("Attempting automatic positioning without sensors!");
-				}
 				break;
 			case CUSTOM_POSITIONING:
-				if(!isEncoderFunctional) {
-					System.err.println("No custom positioning with potentiometer");
-					break;
-				}
-				if (!commands.robotSetpoints.sliderCustomSetpoint.isPresent()) {
-					System.err.println("No setpoint");
-					break;
-				} else {
-					mTarget = SliderTarget.CUSTOM;
-				}
 				mTarget = SliderTarget.CUSTOM;
 				//problem  below
 				mOutput.setPosition(commands.robotSetpoints.sliderCustomSetpoint.get(), mEncoderGains);

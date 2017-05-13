@@ -86,22 +86,29 @@ public class OperatorInterface {
 //		}
 
 		// Slider
-		if (mSliderStick.getRawButton(2)) {	// opposite of preferred thumb position
-			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.NONE;
-			newCommands.addWantedRoutine(new ManualControlSliderRoutine());
-		} else if (mSliderStick.getRawButton(3)) {	// preferred thumb position
-			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.CENTER;
-			newCommands.addWantedRoutine(new AutocorrectPositioningSliderRoutine(Slider.SliderTarget.CENTER));
+//		if (mSliderStick.getRawButton(2)) {	// opposite of preferred thumb position
+//			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.NONE;
+//			newCommands.addWantedRoutine(new ManualControlSliderRoutine());
+//		} else if (mSliderStick.getRawButton(3)) {	// preferred thumb position
+//			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.CENTER;
+//			newCommands.addWantedRoutine(new AutocorrectPositioningSliderRoutine(Slider.SliderTarget.CENTER));
+//		} else if (mSliderStick.getRawButton(4)) {
+//			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.LEFT;
+//			newCommands.addWantedRoutine(new AutocorrectPositioningSliderRoutine(Slider.SliderTarget.LEFT));
+//		} else if (mSliderStick.getRawButton(5)) {
+//			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.RIGHT;
+//			newCommands.addWantedRoutine(new AutocorrectPositioningSliderRoutine(Slider.SliderTarget.RIGHT));
+//		} else if (Slider.getInstance().getSliderState() == Slider.SliderState.IDLE) {
+//			newCommands.addWantedRoutine(new ManualControlSliderRoutine());
+//		}
+		if (mSliderStick.getRawButton(2)) {
+			newCommands.robotSetpoints.simpleSliderSetpoint = SimpleSlider.SliderDirection.IDLE;
 		} else if (mSliderStick.getRawButton(4)) {
-			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.LEFT;
-			newCommands.addWantedRoutine(new AutocorrectPositioningSliderRoutine(Slider.SliderTarget.LEFT));
+			newCommands.robotSetpoints.simpleSliderSetpoint = SimpleSlider.SliderDirection.LEFT;
 		} else if (mSliderStick.getRawButton(5)) {
-			newCommands.robotSetpoints.sliderSetpoint = Slider.SliderTarget.RIGHT;
-			newCommands.addWantedRoutine(new AutocorrectPositioningSliderRoutine(Slider.SliderTarget.RIGHT));
-		} else if (Slider.getInstance().getSliderState() == Slider.SliderState.IDLE) {
-			newCommands.addWantedRoutine(new ManualControlSliderRoutine());
+			newCommands.robotSetpoints.simpleSliderSetpoint = SimpleSlider.SliderDirection.RIGHT;
 		}
-
+ 
 		// Spatula
 		if (mSliderStick.getRawButton(8)) {
 			newCommands.addWantedRoutine(new SpatulaDownAutocorrectRoutine());
