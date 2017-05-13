@@ -41,7 +41,7 @@ public class Robot extends IterativeRobot {
 	// Subsystem controllers
 	private Drive mDrive = Drive.getInstance();
 	private Flippers mFlippers = Flippers.getInstance();
-	private Slider mSlider = Slider.getInstance();
+	private SimpleSlider mSlider = SimpleSlider.getInstance();
 	private Spatula mSpatula = Spatula.getInstance();
 	private Intake mIntake = Intake.getInstance();
 	private Climber mClimber = Climber.getInstance();
