@@ -2,6 +2,7 @@ package com.palyrobotics.frc2017.subsystems;
 
 import com.palyrobotics.frc2017.config.Commands;
 import com.palyrobotics.frc2017.config.RobotState;
+import com.palyrobotics.frc2017.util.CANTalonOutput;
 import com.palyrobotics.frc2017.util.Subsystem;
 import com.palyrobotics.frc2017.util.archive.SubsystemLoop;
 
@@ -13,14 +14,14 @@ import com.palyrobotics.frc2017.util.archive.SubsystemLoop;
  */
 public class SimpleClimber extends Subsystem implements SubsystemLoop {
 	private static SimpleClimber instance = new SimpleClimber();
+	private RobotState mRobotState;
 	public static SimpleClimber getInstance() {
 		return instance;
 	}
 	
-	//Speed at which the robot should climb
-	private static double kClimberSpeed = 0.5;
 	//Speed at which the robot is currently climbing, changes if ClimberState is CLIMBING
-	private double climberSpeed = 0;
+	private CANTalonOutput mOutput = new CANTalonOutput();
+;
 
 	public SimpleClimber() {
 		super("Simple Climber");
@@ -31,35 +32,40 @@ public class SimpleClimber extends Subsystem implements SubsystemLoop {
 	
 	@Override
 	public void start() {
+		mOutput.setPercentVBus(0);
 	}
 
 	@Override
 	public void stop() {
+		mOutput.setPercentVBus(0);
 	}
 	/**
 	 * Updates climber subsystem, and sets the climberSpeed to wantedClimberSpeed
 	 */
 	@Override
 	public void update(Commands commands, RobotState robotState) {
-		//climberState = commands.wantedSimpleClimberState;
+		climberState = commands.wantedSimpleClimberState;
 		switch(climberState){
 		case CLIMBING:
-			climberSpeed = kClimberSpeed;
+			mOutput.setPercentVBus(0.3);
 			break;
 		case IDLE:
-			climberSpeed = 0;
+			mOutput.setPercentVBus(0);
 			break;
 		}
 	}
 	/**
 	 * @return climberSpeed
 	 */
-	public double getOutput() {
-		return climberSpeed;
+	public CANTalonOutput getOutput() {
+		return mOutput;
 	}
 
 	@Override
 	public String getStatus() {
 		return "";
+	}
+	public ClimberState getClimberState(){
+		return climberState;
 	}
 }

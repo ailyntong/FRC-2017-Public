@@ -44,7 +44,7 @@ public class Robot extends IterativeRobot {
 	private SimpleSlider mSlider = SimpleSlider.getInstance();
 	private Spatula mSpatula = Spatula.getInstance();
 	private Intake mIntake = Intake.getInstance();
-	private Climber mClimber = Climber.getInstance();
+	private SimpleClimber mClimber = SimpleClimber.getInstance();
 	private Logger mLogger = Logger.getInstance();
 
 	// Hardware Updater

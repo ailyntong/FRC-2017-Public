@@ -29,28 +29,33 @@ public class SimpleSlider extends Subsystem implements SubsystemLoop {
 
 	@Override
 	public void start() {
+		mSliderDirection = SliderDirection.IDLE;
 		mOutput.setPercentVBus(0);
 	}
 
 	@Override
 	public void stop() {
+		mSliderDirection = SliderDirection.IDLE;
 		mOutput.setPercentVBus(0);
 	}
 
 	@Override
 	public String getStatus() {
-		return null;
+		return "";
 	}
 
-	@Override
+	@Override 
 	public void update(Commands commands, RobotState robotState) {
+		mSliderDirection = commands.wantedSimpleSliderState;
 		mRobotState = robotState;
 		switch(mSliderDirection) {
 		case LEFT:
-			mOutput.setPercentVBus(-1);
+			mOutput.setPercentVBus(-.25);
+			System.out.println("Moving left");
 			break;
 		case RIGHT:
-			mOutput.setPercentVBus(1);
+			mOutput.setPercentVBus(.25);
+			System.out.println("Moving Right");
 			break;
 		case IDLE:
 			mOutput.setPercentVBus(0);
@@ -61,8 +66,8 @@ public class SimpleSlider extends Subsystem implements SubsystemLoop {
 		return mOutput;
 	}
 
-	public Object getSliderState() {
-		return null;
+	public SliderDirection getSliderState() {
+		return mSliderDirection;
 	}
 
 }

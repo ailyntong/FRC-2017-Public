@@ -101,12 +101,13 @@ public class OperatorInterface {
 //		} else if (Slider.getInstance().getSliderState() == Slider.SliderState.IDLE) {
 //			newCommands.addWantedRoutine(new ManualControlSliderRoutine());
 //		}
-		if (mSliderStick.getRawButton(2)) {
-			newCommands.robotSetpoints.simpleSliderSetpoint = SimpleSlider.SliderDirection.IDLE;
-		} else if (mSliderStick.getRawButton(4)) {
-			newCommands.robotSetpoints.simpleSliderSetpoint = SimpleSlider.SliderDirection.LEFT;
+		if (mSliderStick.getRawButton(4)) {
+			newCommands.wantedSimpleSliderState = SimpleSlider.SliderDirection.LEFT;
+			System.out.println("Got left button");
 		} else if (mSliderStick.getRawButton(5)) {
-			newCommands.robotSetpoints.simpleSliderSetpoint = SimpleSlider.SliderDirection.RIGHT;
+			newCommands.wantedSimpleSliderState = SimpleSlider.SliderDirection.RIGHT;
+		} else {
+			newCommands.wantedSimpleSliderState = SimpleSlider.SliderDirection.IDLE;
 		}
  
 		// Spatula
@@ -126,21 +127,28 @@ public class OperatorInterface {
 		}
 
 		// Climber buttons overrides joystick
-		if (mSliderStick.getRawButton(10)) {
-			newCommands.climberStickInput.y = -0.15;
-		} else if (mSliderStick.getRawButton(11)) {
-			newCommands.climberStickInput.y = -0.8;
-		} else if (mDriveStick.getRawButton(7) || mDriveStick.getRawButton(9) || mDriveStick.getRawButton(11)) { // 7, 9, 11
-			newCommands.climberStickInput.y = -0.15;
-		} else if (mDriveStick.getRawButton(8) || mDriveStick.getRawButton(10) || mDriveStick.getRawButton(12)) { // 8, 10, 12
-			newCommands.climberStickInput.y = -0.8;
+//		if (mSliderStick.getRawButton(10)) {
+//			newCommands.climberStickInput.y = -0.15;
+//		} else if (mSliderStick.getRawButton(11)) {
+//			newCommands.climberStickInput.y = -0.8;
+//		} else if (mDriveStick.getRawButton(7) || mDriveStick.getRawButton(9) || mDriveStick.getRawButton(11)) { // 7, 9, 11
+//			newCommands.climberStickInput.y = -0.15;
+//		} else if (mDriveStick.getRawButton(8) || mDriveStick.getRawButton(10) || mDriveStick.getRawButton(12)) { // 8, 10, 12
+//			newCommands.climberStickInput.y = -0.8;
+//		}
+		//SimpleCLimber buttons
+		if (mClimberStick.getX() > 0) {
+			newCommands.wantedSimpleClimberState = SimpleClimber.ClimberState.CLIMBING;
+			System.out.println("Got joystick input");
+		} else {
+			newCommands.wantedSimpleClimberState = SimpleClimber.ClimberState.IDLE;
 		}
 		// Climber joystick may be set in a virtual sense
-		if (newCommands.climberStickInput.y <= 0.02) {
-			newCommands.wantedClimberState = Climber.ClimberState.MANUAL;
-		} else {
-			newCommands.wantedClimberState = Climber.ClimberState.IDLE;
-		}
+//		if (newCommands.climberStickInput.y <= 0.02) {
+//			newCommands.wantedClimberState = Climber.ClimberState.MANUAL;
+//		} else {
+//			newCommands.wantedClimberState = Climber.ClimberState.IDLE;
+//		}
 
 //		Logger.getInstance().logRobotThread("Drive stick", newCommands.leftStickInput);
 //		Logger.getInstance().logRobotThread("Turn stick", newCommands.rightStickInput);

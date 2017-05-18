@@ -10,6 +10,7 @@ import com.palyrobotics.frc2017.subsystems.Climber;
 import com.palyrobotics.frc2017.subsystems.Drive;
 import com.palyrobotics.frc2017.subsystems.Flippers;
 import com.palyrobotics.frc2017.subsystems.Intake;
+import com.palyrobotics.frc2017.subsystems.SimpleClimber;
 import com.palyrobotics.frc2017.subsystems.SimpleSlider;
 import com.palyrobotics.frc2017.subsystems.SimpleSlider.SliderDirection;
 import com.palyrobotics.frc2017.subsystems.Slider;
@@ -36,7 +37,8 @@ public class Commands {
 	public Spatula.SpatulaState wantedSpatulaState = Spatula.SpatulaState.UP;
 	public Intake.IntakeState wantedIntakeState = Intake.IntakeState.IDLE;
 	public Climber.ClimberState wantedClimberState = Climber.ClimberState.IDLE;
-
+	public SimpleClimber.ClimberState wantedSimpleClimberState = SimpleClimber.ClimberState.IDLE;
+	public SimpleSlider.SliderDirection wantedSimpleSliderState = SimpleSlider.SliderDirection.IDLE;
 	public void addWantedRoutine(Routine wantedRoutine) {
 		for(Routine routine : wantedRoutines) {
 			if(routine.getClass().equals(wantedRoutine.getClass())) {
@@ -116,6 +118,8 @@ public class Commands {
 		copy.wantedSliderState = this.wantedSliderState;
 		copy.wantedIntakeState = this.wantedIntakeState;
 		copy.wantedClimberState = this.wantedClimberState;
+		copy.wantedSimpleClimberState = this.wantedSimpleClimberState;
+		copy.wantedSimpleSliderState = this.wantedSimpleSliderState;
 
 		copy.cancelCurrentRoutines = this.cancelCurrentRoutines;
 		copy.leftStickInput = this.leftStickInput;
