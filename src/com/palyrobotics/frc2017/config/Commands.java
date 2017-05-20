@@ -13,6 +13,7 @@ import com.palyrobotics.frc2017.subsystems.Intake;
 import com.palyrobotics.frc2017.subsystems.SimpleClimber;
 import com.palyrobotics.frc2017.subsystems.SimpleSlider;
 import com.palyrobotics.frc2017.subsystems.SimpleSlider.SliderDirection;
+import com.palyrobotics.frc2017.subsystems.SimpleSpatula;
 import com.palyrobotics.frc2017.subsystems.Slider;
 import com.palyrobotics.frc2017.subsystems.Slider.SliderTarget;
 import com.palyrobotics.frc2017.subsystems.Spatula;
@@ -39,6 +40,8 @@ public class Commands {
 	public Climber.ClimberState wantedClimberState = Climber.ClimberState.IDLE;
 	public SimpleClimber.ClimberState wantedSimpleClimberState = SimpleClimber.ClimberState.IDLE;
 	public SimpleSlider.SliderDirection wantedSimpleSliderState = SimpleSlider.SliderDirection.IDLE;
+	public SimpleSpatula.SimpleSpatulaState wantedSimpleSpatulaState = SimpleSpatula.SimpleSpatulaState.UP;
+	
 	public void addWantedRoutine(Routine wantedRoutine) {
 		for(Routine routine : wantedRoutines) {
 			if(routine.getClass().equals(wantedRoutine.getClass())) {
@@ -58,7 +61,6 @@ public class Commands {
 		
 		public Optional<DriveSignal> drivePowerSetpoint = Optional.empty();
 		public SliderTarget sliderSetpoint = Slider.SliderTarget.NONE;
-		public SliderDirection simpleSliderSetpoint = SimpleSlider.SliderDirection.IDLE;
 		public Optional<Double> sliderCustomSetpoint = Optional.empty();
 
 		/**
@@ -67,7 +69,6 @@ public class Commands {
 		public void reset() {
 			drivePowerSetpoint = Optional.empty();
 			sliderSetpoint = Slider.SliderTarget.NONE;
-			simpleSliderSetpoint = SimpleSlider.SliderDirection.IDLE;
 		}
 	}
 	// All robot setpoints
@@ -120,6 +121,7 @@ public class Commands {
 		copy.wantedClimberState = this.wantedClimberState;
 		copy.wantedSimpleClimberState = this.wantedSimpleClimberState;
 		copy.wantedSimpleSliderState = this.wantedSimpleSliderState;
+		copy.wantedSimpleSpatulaState = this.wantedSimpleSpatulaState;
 
 		copy.cancelCurrentRoutines = this.cancelCurrentRoutines;
 		copy.leftStickInput = this.leftStickInput;

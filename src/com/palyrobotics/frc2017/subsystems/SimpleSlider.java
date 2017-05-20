@@ -24,7 +24,7 @@ public class SimpleSlider extends Subsystem implements SubsystemLoop {
 	}
 	private SliderDirection mSliderDirection;
 	public SimpleSlider() {
-		super("Sipmle Slider");
+		super("Simple Slider");
 	}
 
 	@Override

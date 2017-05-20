@@ -42,7 +42,7 @@ public class Robot extends IterativeRobot {
 	private Drive mDrive = Drive.getInstance();
 	private Flippers mFlippers = Flippers.getInstance();
 	private SimpleSlider mSlider = SimpleSlider.getInstance();
-	private Spatula mSpatula = Spatula.getInstance();
+	private SimpleSpatula mSpatula = SimpleSpatula.getInstance();
 	private Intake mIntake = Intake.getInstance();
 	private SimpleClimber mClimber = SimpleClimber.getInstance();
 	private Logger mLogger = Logger.getInstance();

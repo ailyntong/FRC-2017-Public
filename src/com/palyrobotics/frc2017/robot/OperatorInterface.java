@@ -112,9 +112,9 @@ public class OperatorInterface {
  
 		// Spatula
 		if (mSliderStick.getRawButton(8)) {
-			newCommands.addWantedRoutine(new SpatulaDownAutocorrectRoutine());
+			newCommands.wantedSimpleSpatulaState = SimpleSpatula.SimpleSpatulaState.DOWN;
 		} else if (mSliderStick.getRawButton(9)) {
-			newCommands.wantedSpatulaState = Spatula.SpatulaState.UP;
+			newCommands.wantedSimpleSpatulaState = SimpleSpatula.SimpleSpatulaState.UP;
 		}
 
 		// Intake
